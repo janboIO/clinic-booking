@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+
+export const runtime = 'edge';
 import { getBookingById, updateBookingStatus, deleteBooking, rescheduleBooking } from "@/lib/db";
 import { sendCancellationEmail } from "@/lib/email";
 import { getDoctorById, getLocationById } from "@/lib/data";

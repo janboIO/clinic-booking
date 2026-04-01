@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+
+export const runtime = 'edge';
 import { getBookedTimesForDateDoctor } from "@/lib/db";
 import { getAllTimeSlots } from "@/lib/data";
 

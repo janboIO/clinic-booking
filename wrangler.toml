@@ -1,0 +1,16 @@
+name = "clinic-booking"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+pages_build_output_dir = ".open-next/assets"
+
+# Environment variables — set secrets via `wrangler pages secret put` or
+# the Cloudflare dashboard. Do NOT commit real values here.
+[vars]
+# RESEND_FROM_EMAIL = "noreply@yourdomain.com"
+
+# NOTE: File-based SQLite (lib/db.ts) does not run on Cloudflare's edge runtime.
+# Before deploying, update lib/db.ts to use @libsql/client/web with a remote
+# Turso database URL, and add these env vars:
+#   TURSO_DATABASE_URL = "libsql://your-db.turso.io"
+#   TURSO_AUTH_TOKEN   = "<token>"

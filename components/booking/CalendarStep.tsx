@@ -17,9 +17,9 @@ const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Se
 
 function getNext14Weekdays(): Date[] {
   const days: Date[] = [];
-  // Use a fixed reference date for consistency with seed data
-  const today = new Date("2026-04-01T00:00:00");
-  const cursor = new Date(today);
+  const cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+  cursor.setDate(cursor.getDate() + 1); // start from tomorrow
 
   while (days.length < 14) {
     const dow = cursor.getDay();
@@ -32,7 +32,10 @@ function getNext14Weekdays(): Date[] {
 }
 
 function toIso(d: Date): string {
-  return d.toISOString().split("T")[0];
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 export default function CalendarStep({

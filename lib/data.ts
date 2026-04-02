@@ -78,10 +78,10 @@ export function getLocationById(id: string): Location | undefined {
   return LOCATIONS.find((l) => l.id === id);
 }
 
-/** Generate all 30-minute slots from 08:00 to 15:30 */
+/** Generate all 30-minute slots from 08:00 to 16:00 */
 export function getAllTimeSlots(): string[] {
   const slots: string[] = [];
-  for (let h = 8; h <= 15; h++) {
+  for (let h = 8; h <= 16; h++) {
     slots.push(`${String(h).padStart(2, "0")}:00`);
     if (h < 16) slots.push(`${String(h).padStart(2, "0")}:30`);
   }

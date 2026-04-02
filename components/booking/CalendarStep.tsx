@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import type { TimeSlot } from "@/lib/types";
 
 interface Props {
@@ -12,47 +12,82 @@ interface Props {
   onBack: () => void;
 }
 
-const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-function getNext14Weekdays(): Date[] {
-  const days: Date[] = [];
-  const cursor = new Date();
-  cursor.setHours(0, 0, 0, 0);
-  cursor.setDate(cursor.getDate() + 1); // start from tomorrow
-
-  while (days.length < 14) {
-    const dow = cursor.getDay();
-    if (dow !== 0 && dow !== 6) {
-      days.push(new Date(cursor));
-    }
-    cursor.setDate(cursor.getDate() + 1);
-  }
-  return days;
-}
+const COL_HEADERS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const FULL_DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
 
 function toIso(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export default function CalendarStep({
-  doctorId,
-  selectedDate,
-  selectedTime,
-  onSelect,
-  onBack,
-}: Props) {
+// Convert JS day (0=Sun) to Mon-first column index (0=Mon … 6=Sun)
+function colIndex(jsDay: number): number {
+  return (jsDay + 6) % 7;
+}
+
+// Build flat grid cells for a month: null = padding, string = ISO date
+function buildCells(year: number, month: number): (string | null)[] {
+  const firstDow = new Date(year, month, 1).getDay();
+  const totalDays = new Date(year, month + 1, 0).getDate();
+  const cells: (string | null)[] = Array(colIndex(firstDow)).fill(null);
+  for (let d = 1; d <= totalDays; d++) cells.push(toIso(new Date(year, month, d)));
+  while (cells.length % 7 !== 0) cells.push(null);
+  return cells;
+}
+
+type DateStatus = "past" | "out-of-range" | "loading" | "available" | "full";
+
+export default function CalendarStep({ doctorId, selectedDate, selectedTime, onSelect, onBack }: Props) {
+  const now = new Date();
+  const todayIso = toIso(now);
+
+  const maxDate = new Date(now);
+  maxDate.setMonth(maxDate.getMonth() + 3);
+  const maxIso = toIso(maxDate);
+
+  // If returning to this step with a date already chosen, open that month
+  const initDate = selectedDate ? new Date(selectedDate + "T00:00:00") : now;
+  const [viewYear, setViewYear] = useState(initDate.getFullYear());
+  const [viewMonth, setViewMonth] = useState(initDate.getMonth());
+
+  const [statusMap, setStatusMap] = useState<Record<string, DateStatus>>({});
   const [activeDate, setActiveDate] = useState<string>(selectedDate);
   const [slots, setSlots] = useState<TimeSlot[]>([]);
-  const [loading, setLoading] = useState(false);
-  const weekdays = getNext14Weekdays();
+  const [slotsLoading, setSlotsLoading] = useState(false);
+
+  // Pre-fetch availability for every bookable date in the visible month
+  useEffect(() => {
+    const cells = buildCells(viewYear, viewMonth);
+    const initial: Record<string, DateStatus> = {};
+
+    cells.forEach((iso) => {
+      if (!iso) return;
+      if (iso <= todayIso) { initial[iso] = "past"; return; }
+      if (iso > maxIso) { initial[iso] = "out-of-range"; return; }
+      initial[iso] = "loading";
+    });
+    setStatusMap(initial);
+
+    const toFetch = (cells.filter(Boolean) as string[]).filter((iso) => initial[iso] === "loading");
+    toFetch.forEach(async (iso) => {
+      try {
+        const res = await fetch(`/api/availability?doctorId=${doctorId}&date=${iso}`);
+        const data: TimeSlot[] = await res.json();
+        const hasAvailable = data.some((s) => s.available);
+        setStatusMap((prev) => ({ ...prev, [iso]: hasAvailable ? "available" : "full" }));
+      } catch {
+        setStatusMap((prev) => ({ ...prev, [iso]: "available" }));
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewYear, viewMonth, doctorId]);
 
   const fetchSlots = useCallback(
     async (date: string) => {
-      setLoading(true);
+      setSlotsLoading(true);
       try {
         const res = await fetch(`/api/availability?doctorId=${doctorId}&date=${date}`);
         const data: TimeSlot[] = await res.json();
@@ -60,129 +95,235 @@ export default function CalendarStep({
       } catch {
         setSlots([]);
       } finally {
-        setLoading(false);
+        setSlotsLoading(false);
       }
     },
     [doctorId]
   );
 
+  // Re-fetch slots when the doctor changes and a date is already active
   useEffect(() => {
-    const initial = activeDate || toIso(weekdays[0]);
-    setActiveDate(initial);
-    fetchSlots(initial);
+    if (activeDate) fetchSlots(activeDate);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doctorId]);
 
   const handleDayClick = (iso: string) => {
+    const s = statusMap[iso];
+    if (!s || s === "past" || s === "out-of-range" || s === "full" || s === "loading") return;
     setActiveDate(iso);
     fetchSlots(iso);
   };
 
-  const handleSlotClick = (time: string) => {
-    onSelect(activeDate, time);
+  const canGoPrev = !(viewYear === now.getFullYear() && viewMonth === now.getMonth());
+  const canGoNext =
+    viewYear < maxDate.getFullYear() ||
+    (viewYear === maxDate.getFullYear() && viewMonth < maxDate.getMonth());
+
+  const goToPrev = () => {
+    if (viewMonth === 0) { setViewYear((y) => y - 1); setViewMonth(11); }
+    else setViewMonth((m) => m - 1);
+  };
+
+  const goToNext = () => {
+    if (viewMonth === 11) { setViewYear((y) => y + 1); setViewMonth(0); }
+    else setViewMonth((m) => m + 1);
+  };
+
+  const cells = buildCells(viewYear, viewMonth);
+
+  const formatDate = (iso: string) => {
+    const d = new Date(iso + "T00:00:00");
+    return `${FULL_DAY_NAMES[d.getDay()]}, ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
   };
 
   return (
     <div>
       <h2 className="text-2xl font-bold text-slate-800 mb-2">Pick a date &amp; time</h2>
-      <p className="text-slate-500 text-sm mb-6">Available slots are shown in blue.</p>
+      <p className="text-slate-500 text-sm mb-6">Select an available date, then choose a time slot.</p>
 
-      {/* Day picker */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-6 -mx-1 px-1">
-        {weekdays.map((day) => {
-          const iso = toIso(day);
-          const isActive = iso === activeDate;
-          return (
-            <button
-              key={iso}
-              onClick={() => handleDayClick(iso)}
-              className="flex-shrink-0 flex flex-col items-center w-14 py-2.5 rounded-xl border-2 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-              style={{
-                borderColor: isActive ? "#2563EB" : "#E2E8F0",
-                background: isActive ? "#2563EB" : "#FFFFFF",
-              }}
-            >
-              <span
-                className="text-xs font-medium"
-                style={{ color: isActive ? "rgba(255,255,255,0.8)" : "#94A3B8" }}
-              >
-                {DAY_NAMES[day.getDay()]}
-              </span>
-              <span
-                className="text-lg font-bold leading-tight"
-                style={{ color: isActive ? "#FFFFFF" : "#1E293B" }}
-              >
-                {day.getDate()}
-              </span>
-              <span
-                className="text-xs"
-                style={{ color: isActive ? "rgba(255,255,255,0.7)" : "#94A3B8" }}
-              >
-                {MONTH_NAMES[day.getMonth()]}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      {/* ── Monthly calendar ─────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-slate-200 overflow-hidden mb-6">
 
-      {/* Time slots */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="w-8 h-8 border-3 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+        {/* Month navigation */}
+        <div className="flex items-center justify-between px-5 py-3 bg-white border-b border-slate-100">
+          <button
+            onClick={goToPrev}
+            disabled={!canGoPrev}
+            aria-label="Previous month"
+            className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors hover:bg-slate-100 disabled:opacity-25 disabled:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M9 11L5 7l4-4" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+
+          <span className="text-sm font-semibold text-slate-800 tabular-nums">
+            {MONTH_NAMES[viewMonth]} {viewYear}
+          </span>
+
+          <button
+            onClick={goToNext}
+            disabled={!canGoNext}
+            aria-label="Next month"
+            className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors hover:bg-slate-100 disabled:opacity-25 disabled:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M5 3l4 4-4 4" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
         </div>
-      ) : (
-        <motion.div
-          key={activeDate}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-8"
-        >
-          {slots.map((slot) => {
-            const isSelected = slot.time === selectedTime && activeDate === selectedDate;
-            const isUnavailable = !slot.available;
+
+        {/* Column headers */}
+        <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50">
+          {COL_HEADERS.map((h) => (
+            <div
+              key={h}
+              className="py-2.5 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider"
+            >
+              {h}
+            </div>
+          ))}
+        </div>
+
+        {/* Date cells */}
+        <div className="grid grid-cols-7 bg-white">
+          {cells.map((iso, i) => {
+            if (!iso) {
+              return <div key={`pad-${i}`} className="h-10 border-t border-slate-50" />;
+            }
+
+            const status = statusMap[iso] ?? "loading";
+            const isSelected = iso === activeDate;
+            const isToday = iso === todayIso;
+            const isDisabled =
+              status === "past" ||
+              status === "out-of-range" ||
+              status === "full" ||
+              status === "loading";
+            const dateNum = parseInt(iso.slice(8), 10);
+
+            const textColor = isSelected
+              ? "#FFFFFF"
+              : status === "past" || status === "out-of-range" || status === "full"
+              ? "#CBD5E1"
+              : status === "loading"
+              ? "#E2E8F0"
+              : "#1E293B";
 
             return (
               <button
-                key={slot.time}
-                disabled={isUnavailable}
-                onClick={() => handleSlotClick(slot.time)}
-                className="py-2 rounded-xl text-sm font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                key={iso}
+                onClick={() => handleDayClick(iso)}
+                disabled={isDisabled}
+                aria-label={`${iso}${isDisabled ? ", unavailable" : ""}`}
+                aria-pressed={isSelected}
+                className="relative h-10 flex items-center justify-center text-sm font-medium border-t border-slate-50 transition-colors duration-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400"
                 style={{
-                  background: isSelected
-                    ? "#1D4ED8"
-                    : isUnavailable
-                    ? "#F1F5F9"
-                    : "#EFF6FF",
-                  color: isSelected
-                    ? "#FFFFFF"
-                    : isUnavailable
-                    ? "#CBD5E1"
-                    : "#2563EB",
-                  textDecoration: isUnavailable ? "line-through" : "none",
-                  cursor: isUnavailable ? "not-allowed" : "pointer",
-                  border: `1.5px solid ${
-                    isSelected
-                      ? "#1D4ED8"
-                      : isUnavailable
-                      ? "#E2E8F0"
-                      : "#BFDBFE"
-                  }`,
+                  background: isSelected ? "#2563EB" : "transparent",
+                  color: textColor,
+                  cursor: isDisabled ? "default" : "pointer",
                 }}
               >
-                {slot.time}
+                {/* Today ring */}
+                {isToday && !isSelected && (
+                  <span
+                    className="absolute inset-1 rounded-full border border-blue-300 pointer-events-none"
+                    aria-hidden="true"
+                  />
+                )}
+                {/* Blue availability dot */}
+                {status === "available" && !isSelected && (
+                  <span
+                    className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-blue-500 pointer-events-none"
+                    aria-hidden="true"
+                  />
+                )}
+                {/* Loading shimmer */}
+                {status === "loading" && (
+                  <span
+                    className="absolute inset-1.5 rounded-md bg-slate-100 animate-pulse pointer-events-none"
+                    aria-hidden="true"
+                  />
+                )}
+                <span className="relative z-10">{dateNum}</span>
               </button>
             );
           })}
-        </motion.div>
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center gap-5 px-5 py-3 bg-slate-50 border-t border-slate-100">
+          <span className="flex items-center gap-1.5 text-xs text-slate-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block" aria-hidden="true" />
+            Available
+          </span>
+          <span className="flex items-center gap-1.5 text-xs text-slate-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-200 inline-block" aria-hidden="true" />
+            Fully booked
+          </span>
+          <span className="flex items-center gap-1.5 text-xs text-slate-400">
+            <span
+              className="w-3.5 h-3.5 rounded-full border border-blue-300 inline-block"
+              aria-hidden="true"
+            />
+            Today
+          </span>
+        </div>
+      </div>
+
+      {/* ── Time slots (shown once a date is selected) ───────────────── */}
+      {activeDate && (
+        <div className="mb-6">
+          <p className="text-sm font-semibold text-slate-700 mb-3">{formatDate(activeDate)}</p>
+
+          {slotsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-7 h-7 border-2 border-blue-100 border-t-blue-500 rounded-full animate-spin" />
+            </div>
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeDate}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="grid grid-cols-4 sm:grid-cols-6 gap-2"
+              >
+                {slots.map((slot) => {
+                  const isSelected = slot.time === selectedTime && activeDate === selectedDate;
+                  const isUnavailable = !slot.available;
+                  return (
+                    <button
+                      key={slot.time}
+                      disabled={isUnavailable}
+                      onClick={() => onSelect(activeDate, slot.time)}
+                      className="py-2 rounded-xl text-sm font-medium transition-all duration-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                      style={{
+                        background: isSelected ? "#1D4ED8" : isUnavailable ? "#F8FAFC" : "#EFF6FF",
+                        color: isSelected ? "#FFFFFF" : isUnavailable ? "#CBD5E1" : "#2563EB",
+                        textDecoration: isUnavailable ? "line-through" : "none",
+                        cursor: isUnavailable ? "not-allowed" : "pointer",
+                        border: `1.5px solid ${isSelected ? "#1D4ED8" : isUnavailable ? "#E2E8F0" : "#BFDBFE"}`,
+                      }}
+                    >
+                      {slot.time}
+                    </button>
+                  );
+                })}
+              </motion.div>
+            </AnimatePresence>
+          )}
+        </div>
       )}
 
+      {/* ── Confirmation badge ───────────────────────────────────────── */}
       {selectedDate && selectedTime && (
         <div
           className="mb-6 px-4 py-3 rounded-xl flex items-center gap-3 text-sm"
           style={{ background: "#EFF6FF", border: "1px solid #BFDBFE" }}
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <circle cx="8" cy="8" r="7" stroke="#2563EB" strokeWidth="1.5" />
             <path d="M5 8l2.5 2.5L11 5.5" stroke="#2563EB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -196,7 +337,7 @@ export default function CalendarStep({
         onClick={onBack}
         className="flex items-center gap-2 text-sm text-slate-500 hover:text-blue-600 transition-colors"
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
           <path d="M13 8H3M7 4l-4 4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         Back to doctors

@@ -1,11 +1,11 @@
 {
   "/_not-found/page": "/_not-found",
-  "/api/bookings/route": "/api/bookings",
-  "/api/auth/route": "/api/auth",
-  "/api/availability/route": "/api/availability",
-  "/api/bookings/[id]/route": "/api/bookings/[id]",
-  "/admin/page": "/admin",
-  "/page": "/",
+  "/admin/dashboard/page": "/admin/dashboard",
   "/confirmation/page": "/confirmation",
-  "/admin/dashboard/page": "/admin/dashboard"
+  "/page": "/",
+  "/admin/page": "/admin",
+  "/api/availability/route": "/api/availability",
+  "/api/auth/route": "/api/auth",
+  "/api/bookings/[id]/route": "/api/bookings/[id]",
+  "/api/bookings/route": "/api/bookings"
 }

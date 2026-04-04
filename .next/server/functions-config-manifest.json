@@ -1,4 +1,9 @@
 {
   "version": 1,
-  "functions": {}
+  "functions": {
+    "/api/auth": {},
+    "/api/bookings": {},
+    "/api/availability": {},
+    "/api/bookings/[id]": {}
+  }
 }

@@ -1,6 +1,134 @@
 {
   "version": 3,
   "middleware": {},
-  "functions": {},
+  "functions": {
+    "/api/availability/route": {
+      "files": [
+        "server/server-reference-manifest.js",
+        "server/app/api/availability/route_client-reference-manifest.js",
+        "server/middleware-build-manifest.js",
+        "server/middleware-react-loadable-manifest.js",
+        "server/next-font-manifest.js",
+        "server/interception-route-rewrite-manifest.js",
+        "server/edge-runtime-webpack.js",
+        "server/edge-chunks/907.js",
+        "server/edge-chunks/584.js",
+        "server/app/api/availability/route.js"
+      ],
+      "name": "app/api/availability/route",
+      "page": "/api/availability/route",
+      "matchers": [
+        {
+          "regexp": "^/api/availability$",
+          "originalSource": "/api/availability"
+        }
+      ],
+      "wasm": [],
+      "assets": [],
+      "env": {
+        "__NEXT_BUILD_ID": "_fCMHcRlX65yyPwfCaWwt",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "pfR60uIcHACeKnYLeirDEWAqyXuBWdOPP3tAuewm5kk=",
+        "__NEXT_PREVIEW_MODE_ID": "1977d70faf10d4a8f83b0b2f1c42bf08",
+        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "550df85ce322f84adfb981e08c79aa981db823428278a5ace3397c4d81c7d610",
+        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "0d75e6ba4b0c52864ec62ff95b749668143089f6ee2f4911e8194ac122ab5a4f"
+      }
+    },
+    "/api/auth/route": {
+      "files": [
+        "server/server-reference-manifest.js",
+        "server/app/api/auth/route_client-reference-manifest.js",
+        "server/middleware-build-manifest.js",
+        "server/middleware-react-loadable-manifest.js",
+        "server/next-font-manifest.js",
+        "server/interception-route-rewrite-manifest.js",
+        "server/edge-runtime-webpack.js",
+        "server/edge-chunks/907.js",
+        "server/app/api/auth/route.js"
+      ],
+      "name": "app/api/auth/route",
+      "page": "/api/auth/route",
+      "matchers": [
+        {
+          "regexp": "^/api/auth$",
+          "originalSource": "/api/auth"
+        }
+      ],
+      "wasm": [],
+      "assets": [],
+      "env": {
+        "__NEXT_BUILD_ID": "_fCMHcRlX65yyPwfCaWwt",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "pfR60uIcHACeKnYLeirDEWAqyXuBWdOPP3tAuewm5kk=",
+        "__NEXT_PREVIEW_MODE_ID": "1977d70faf10d4a8f83b0b2f1c42bf08",
+        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "550df85ce322f84adfb981e08c79aa981db823428278a5ace3397c4d81c7d610",
+        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "0d75e6ba4b0c52864ec62ff95b749668143089f6ee2f4911e8194ac122ab5a4f"
+      }
+    },
+    "/api/bookings/[id]/route": {
+      "files": [
+        "server/server-reference-manifest.js",
+        "server/app/api/bookings/[id]/route_client-reference-manifest.js",
+        "server/middleware-build-manifest.js",
+        "server/middleware-react-loadable-manifest.js",
+        "server/next-font-manifest.js",
+        "server/interception-route-rewrite-manifest.js",
+        "server/edge-runtime-webpack.js",
+        "server/edge-chunks/907.js",
+        "server/edge-chunks/584.js",
+        "server/edge-chunks/767.js",
+        "server/edge-chunks/358.js",
+        "server/app/api/bookings/[id]/route.js"
+      ],
+      "name": "app/api/bookings/[id]/route",
+      "page": "/api/bookings/[id]/route",
+      "matchers": [
+        {
+          "regexp": "^/api/bookings/(?<id>[^/]+?)$",
+          "originalSource": "/api/bookings/[id]"
+        }
+      ],
+      "wasm": [],
+      "assets": [],
+      "env": {
+        "__NEXT_BUILD_ID": "_fCMHcRlX65yyPwfCaWwt",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "pfR60uIcHACeKnYLeirDEWAqyXuBWdOPP3tAuewm5kk=",
+        "__NEXT_PREVIEW_MODE_ID": "1977d70faf10d4a8f83b0b2f1c42bf08",
+        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "550df85ce322f84adfb981e08c79aa981db823428278a5ace3397c4d81c7d610",
+        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "0d75e6ba4b0c52864ec62ff95b749668143089f6ee2f4911e8194ac122ab5a4f"
+      }
+    },
+    "/api/bookings/route": {
+      "files": [
+        "server/server-reference-manifest.js",
+        "server/app/api/bookings/route_client-reference-manifest.js",
+        "server/middleware-build-manifest.js",
+        "server/middleware-react-loadable-manifest.js",
+        "server/next-font-manifest.js",
+        "server/interception-route-rewrite-manifest.js",
+        "server/edge-runtime-webpack.js",
+        "server/edge-chunks/907.js",
+        "server/edge-chunks/584.js",
+        "server/edge-chunks/767.js",
+        "server/edge-chunks/358.js",
+        "server/app/api/bookings/route.js"
+      ],
+      "name": "app/api/bookings/route",
+      "page": "/api/bookings/route",
+      "matchers": [
+        {
+          "regexp": "^/api/bookings$",
+          "originalSource": "/api/bookings"
+        }
+      ],
+      "wasm": [],
+      "assets": [],
+      "env": {
+        "__NEXT_BUILD_ID": "_fCMHcRlX65yyPwfCaWwt",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "pfR60uIcHACeKnYLeirDEWAqyXuBWdOPP3tAuewm5kk=",
+        "__NEXT_PREVIEW_MODE_ID": "1977d70faf10d4a8f83b0b2f1c42bf08",
+        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "550df85ce322f84adfb981e08c79aa981db823428278a5ace3397c4d81c7d610",
+        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "0d75e6ba4b0c52864ec62ff95b749668143089f6ee2f4911e8194ac122ab5a4f"
+      }
+    }
+  },
   "sortedMiddleware": []
 }

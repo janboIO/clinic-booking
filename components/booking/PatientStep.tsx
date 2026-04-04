@@ -4,6 +4,8 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import type { BookingFormData } from "@/lib/types";
 import { getDoctorById, getLocationById } from "@/lib/data";
+import { useTheme } from "@/context/ThemeContext";
+import type { ThemeTokens } from "@/lib/theme";
 
 interface Props {
   formData: Partial<BookingFormData>;
@@ -21,6 +23,7 @@ function Field({
   placeholder,
   required,
   as,
+  theme,
 }: {
   label: string;
   id: string;
@@ -30,12 +33,13 @@ function Field({
   placeholder?: string;
   required?: boolean;
   as?: "textarea";
+  theme: ThemeTokens;
 }) {
   const sharedStyle: React.CSSProperties = {
-    background: "#111111",
-    border: "1.5px solid rgba(255,255,255,0.1)",
+    background: theme.inputBg,
+    border: `1.5px solid ${theme.inputBorder}`,
     borderRadius: 12,
-    color: "#FFFFFF",
+    color: theme.inputColor,
     fontSize: 14,
     padding: "12px 16px",
     width: "100%",
@@ -49,13 +53,13 @@ function Field({
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+    e.currentTarget.style.borderColor = theme.inputBorder;
     e.currentTarget.style.boxShadow = "none";
   };
 
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium mb-1.5" style={{ color: "#94A3B8" }}>
+      <label htmlFor={id} className="block text-sm font-medium mb-1.5" style={{ color: theme.labelColor }}>
         {label} {required && <span style={{ color: "#EF4444" }}>*</span>}
       </label>
       {as === "textarea" ? (
@@ -88,6 +92,7 @@ function Field({
 }
 
 export default function PatientStep({ formData, onSubmit, onBack, isSubmitting }: Props) {
+  const { theme } = useTheme();
   const [name, setName] = useState(formData.patientName ?? "");
   const [phone, setPhone] = useState(formData.patientPhone ?? "");
   const [email, setEmail] = useState(formData.patientEmail ?? "");
@@ -111,12 +116,12 @@ export default function PatientStep({ formData, onSubmit, onBack, isSubmitting }
   return (
     <div>
       <h2
-        className="font-heading font-bold text-white mb-1.5"
-        style={{ fontSize: 26, letterSpacing: "-0.02em" }}
+        className="font-heading font-bold mb-1.5"
+        style={{ fontSize: 26, letterSpacing: "-0.02em", color: theme.textPrimary }}
       >
         Your details
       </h2>
-      <p className="text-sm mb-6" style={{ color: "#64748B" }}>
+      <p className="text-sm mb-6" style={{ color: theme.textMuted }}>
         Review your booking and enter your contact information.
       </p>
 
@@ -126,23 +131,23 @@ export default function PatientStep({ formData, onSubmit, onBack, isSubmitting }
         animate={{ opacity: 1, y: 0 }}
         className="rounded-2xl p-5 mb-8"
         style={{
-          background: "rgba(37,99,235,0.08)",
-          border: "1px solid rgba(37,99,235,0.2)",
+          background: theme.summaryBg,
+          border: `1px solid ${theme.summaryBorder}`,
         }}
       >
         <p
           className="text-xs font-semibold uppercase tracking-widest mb-4"
-          style={{ color: "#60A5FA" }}
+          style={{ color: theme.summaryLabelColor }}
         >
           Booking summary
         </p>
         <div className="grid grid-cols-2 gap-3">
           {summaryRows.map(({ label, value }) => (
             <div key={label}>
-              <p className="text-xs mb-0.5" style={{ color: "#475569" }}>{label}</p>
+              <p className="text-xs mb-0.5" style={{ color: theme.textDimmed }}>{label}</p>
               <p
                 className="font-semibold text-sm"
-                style={{ color: label === "Time" ? "#60A5FA" : "#E2E8F0" }}
+                style={{ color: label === "Time" ? theme.summaryTimeColor : theme.summaryValueColor }}
               >
                 {value}
               </p>
@@ -152,50 +157,19 @@ export default function PatientStep({ formData, onSubmit, onBack, isSubmitting }
       </motion.div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        <Field
-          label="Full name"
-          id="name"
-          value={name}
-          onChange={setName}
-          placeholder="e.g. John Smith"
-          required
-        />
-        <Field
-          label="Phone number"
-          id="phone"
-          type="tel"
-          value={phone}
-          onChange={setPhone}
-          placeholder="+1 (555) 000-0000"
-          required
-        />
-        <Field
-          label="Email address"
-          id="email"
-          type="email"
-          value={email}
-          onChange={setEmail}
-          placeholder="you@example.com"
-          required
-        />
-        <Field
-          label="Reason for visit"
-          id="reason"
-          as="textarea"
-          value={reason}
-          onChange={setReason}
-          placeholder="Briefly describe why you are booking this appointment"
-          required
-        />
+        <Field label="Full name" id="name" value={name} onChange={setName} placeholder="e.g. John Smith" required theme={theme} />
+        <Field label="Phone number" id="phone" type="tel" value={phone} onChange={setPhone} placeholder="+1 (555) 000-0000" required theme={theme} />
+        <Field label="Email address" id="email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" required theme={theme} />
+        <Field label="Reason for visit" id="reason" as="textarea" value={reason} onChange={setReason} placeholder="Briefly describe why you are booking this appointment" required theme={theme} />
 
         <div className="flex items-center gap-4 pt-2">
           <button
             type="button"
             onClick={onBack}
             className="flex items-center gap-2 text-sm transition-colors"
-            style={{ color: "#475569" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#94A3B8")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
+            style={{ color: theme.backColor }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = theme.backHover)}
+            onMouseLeave={(e) => (e.currentTarget.style.color = theme.backColor)}
           >
             <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
               <path d="M12 7.5H3M7 3.5l-4 4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

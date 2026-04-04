@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { LOCATIONS } from "@/lib/data";
+import { useTheme } from "@/context/ThemeContext";
 
 interface Props {
   selected: string;
@@ -28,19 +29,15 @@ function NYCSkyline() {
 function LASkyline() {
   return (
     <svg viewBox="0 0 72 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="72" height="48">
-      {/* Hills */}
       <path d="M0 38 Q18 22 36 30 Q54 18 72 28 L72 48 L0 48Z" fill="#2563EB" opacity="0.12" />
       <path d="M0 42 Q12 32 24 36 Q36 28 48 34 Q60 26 72 32 L72 48 L0 48Z" fill="#2563EB" opacity="0.2" />
-      {/* Palm trunk */}
       <rect x="34" y="30" width="4" height="18" rx="2" fill="#2563EB" opacity="0.7" />
-      {/* Palm fronds */}
       <path d="M36 30 Q20 22 14 14" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" opacity="0.8" />
       <path d="M36 30 Q52 22 58 14" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" opacity="0.8" />
       <path d="M36 30 Q22 28 12 30" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
       <path d="M36 30 Q50 28 60 30" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
       <path d="M36 30 Q28 20 26 10" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
       <path d="M36 30 Q44 20 46 10" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
-      {/* Sun */}
       <circle cx="58" cy="12" r="6" fill="#2563EB" opacity="0.25" />
       <circle cx="58" cy="12" r="3.5" fill="#2563EB" opacity="0.5" />
     </svg>
@@ -59,7 +56,6 @@ function ChicagoSkyline() {
       <rect x="40" y="12" width="4" height="9" rx="1" fill="#2563EB" opacity="0.85" />
       <rect x="49" y="22" width="9" height="26" rx="1" fill="#2563EB" opacity="0.7" />
       <rect x="60" y="30" width="7" height="18" rx="1" fill="#2563EB" opacity="0.5" />
-      {/* Water reflection */}
       <rect x="0" y="46" width="72" height="2" rx="1" fill="#2563EB" opacity="0.15" />
       <path d="M0 46 Q36 43 72 46" stroke="#2563EB" strokeWidth="0.5" opacity="0.3" />
     </svg>
@@ -69,15 +65,17 @@ function ChicagoSkyline() {
 const CITY_ILLUSTRATIONS = [NYCSkyline, LASkyline, ChicagoSkyline];
 
 export default function LocationStep({ selected, onSelect }: Props) {
+  const { theme } = useTheme();
+
   return (
     <div>
       <h2
-        className="font-heading font-bold text-white mb-1.5"
-        style={{ fontSize: 26, letterSpacing: "-0.02em" }}
+        className="font-heading font-bold mb-1.5"
+        style={{ fontSize: 26, letterSpacing: "-0.02em", color: theme.textPrimary }}
       >
         Choose your clinic
       </h2>
-      <p className="text-sm mb-8" style={{ color: "#64748B" }}>
+      <p className="text-sm mb-8" style={{ color: theme.textMuted }}>
         Select the location most convenient for you.
       </p>
 
@@ -96,15 +94,13 @@ export default function LocationStep({ selected, onSelect }: Props) {
               onClick={() => onSelect(loc.id)}
               className="w-full text-left rounded-2xl p-5 flex items-center gap-5 focus:outline-none"
               style={{
-                background: isSelected
-                  ? "rgba(37,99,235,0.12)"
-                  : "#161616",
+                background: isSelected ? "rgba(37,99,235,0.12)" : theme.locationCardBg,
                 border: isSelected
                   ? "1.5px solid #2563EB"
-                  : "1.5px solid rgba(255,255,255,0.07)",
+                  : `1.5px solid ${theme.locationCardBorder}`,
                 boxShadow: isSelected
                   ? "0 0 0 4px rgba(37,99,235,0.12), 0 8px 24px rgba(37,99,235,0.08)"
-                  : "0 2px 8px rgba(0,0,0,0.3)",
+                  : `0 2px 8px rgba(0,0,0,0.08)`,
                 transition: "all 0.18s ease",
               }}
             >
@@ -114,8 +110,8 @@ export default function LocationStep({ selected, onSelect }: Props) {
                 style={{
                   background: isSelected
                     ? "rgba(37,99,235,0.1)"
-                    : "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.05)",
+                    : theme.locationIllustrationBg,
+                  border: `1px solid ${theme.locationIllustrationBorder}`,
                 }}
               >
                 <Illustration />
@@ -125,7 +121,7 @@ export default function LocationStep({ selected, onSelect }: Props) {
                 <div className="flex items-center gap-2 mb-1">
                   <span
                     className="font-heading font-semibold text-sm"
-                    style={{ color: isSelected ? "#FFFFFF" : "#E2E8F0" }}
+                    style={{ color: isSelected ? theme.textPrimary : theme.textBody }}
                   >
                     {loc.name}
                   </span>
@@ -138,8 +134,8 @@ export default function LocationStep({ selected, onSelect }: Props) {
                     </span>
                   )}
                 </div>
-                <p className="text-xs truncate" style={{ color: "#64748B" }}>{loc.address}</p>
-                <p className="text-xs mt-0.5" style={{ color: "#475569" }}>{loc.district}</p>
+                <p className="text-xs truncate" style={{ color: theme.textMuted }}>{loc.address}</p>
+                <p className="text-xs mt-0.5" style={{ color: theme.textDimmed }}>{loc.district}</p>
               </div>
 
               {/* Arrow */}
@@ -152,7 +148,7 @@ export default function LocationStep({ selected, onSelect }: Props) {
               >
                 <path
                   d="M4 9h10M10 5l4 4-4 4"
-                  stroke={isSelected ? "#2563EB" : "rgba(255,255,255,0.2)"}
+                  stroke={isSelected ? "#2563EB" : theme.locationArrow}
                   strokeWidth="1.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"

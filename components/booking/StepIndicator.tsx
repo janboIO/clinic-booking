@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useTheme } from "@/context/ThemeContext";
 
 const STEPS = ["Location", "Doctor", "Date & Time", "Your Details"];
 
@@ -9,6 +10,8 @@ interface Props {
 }
 
 export default function StepIndicator({ currentStep }: Props) {
+  const { theme } = useTheme();
+
   return (
     <div className="w-full">
       <div className="flex items-center">
@@ -24,9 +27,7 @@ export default function StepIndicator({ currentStep }: Props) {
               <div className="flex flex-col items-center gap-2">
                 <motion.div
                   initial={false}
-                  animate={{
-                    scale: isActive ? 1.1 : 1,
-                  }}
+                  animate={{ scale: isActive ? 1.1 : 1 }}
                   transition={{ duration: 0.2 }}
                   className="relative w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
                   style={{
@@ -34,10 +35,10 @@ export default function StepIndicator({ currentStep }: Props) {
                       ? "#2563EB"
                       : isActive
                       ? "rgba(37,99,235,0.15)"
-                      : "rgba(255,255,255,0.04)",
+                      : theme.stepInactiveBg,
                     border: isCompleted || isActive
-                      ? `2px solid #2563EB`
-                      : "2px solid rgba(255,255,255,0.1)",
+                      ? "2px solid #2563EB"
+                      : `2px solid ${theme.stepInactiveBorder}`,
                     boxShadow: isActive ? "0 0 16px rgba(37,99,235,0.35)" : "none",
                   }}
                 >
@@ -55,7 +56,7 @@ export default function StepIndicator({ currentStep }: Props) {
                     <span
                       className="text-xs font-bold"
                       style={{
-                        color: isActive ? "#2563EB" : "rgba(255,255,255,0.25)",
+                        color: isActive ? "#2563EB" : theme.stepInactiveText,
                       }}
                     >
                       {stepNum}
@@ -67,10 +68,10 @@ export default function StepIndicator({ currentStep }: Props) {
                   className="text-xs font-medium whitespace-nowrap"
                   style={{
                     color: isActive
-                      ? "#FFFFFF"
+                      ? theme.stepLabelActive
                       : isCompleted
-                      ? "#64748B"
-                      : "rgba(255,255,255,0.2)",
+                      ? theme.stepLabelCompleted
+                      : theme.stepLabelInactive,
                   }}
                 >
                   {label}
@@ -81,10 +82,7 @@ export default function StepIndicator({ currentStep }: Props) {
               {!isLast && (
                 <div
                   className="relative h-px mx-3 flex-1"
-                  style={{
-                    background: "rgba(255,255,255,0.07)",
-                    marginBottom: 20,
-                  }}
+                  style={{ background: theme.connectorBg, marginBottom: 20 }}
                 >
                   <motion.div
                     className="absolute inset-y-0 left-0 h-full"

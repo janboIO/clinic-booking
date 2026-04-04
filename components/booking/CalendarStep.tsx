@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { TimeSlot } from "@/lib/types";
+import { useTheme } from "@/context/ThemeContext";
 
 interface Props {
   doctorId: string;
@@ -39,6 +40,7 @@ function buildCells(year: number, month: number): (string | null)[] {
 type DateStatus = "past" | "out-of-range" | "loading" | "available" | "full";
 
 export default function CalendarStep({ doctorId, selectedDate, selectedTime, onSelect, onBack }: Props) {
+  const { theme } = useTheme();
   const now = new Date();
   const todayIso = toIso(now);
 
@@ -134,24 +136,24 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
   return (
     <div>
       <h2
-        className="font-heading font-bold text-white mb-1.5"
-        style={{ fontSize: 26, letterSpacing: "-0.02em" }}
+        className="font-heading font-bold mb-1.5"
+        style={{ fontSize: 26, letterSpacing: "-0.02em", color: theme.textPrimary }}
       >
         Pick a date &amp; time
       </h2>
-      <p className="text-sm mb-6" style={{ color: "#64748B" }}>
+      <p className="text-sm mb-6" style={{ color: theme.textMuted }}>
         Select an available date, then choose a time slot.
       </p>
 
       {/* Calendar */}
       <div
         className="rounded-2xl overflow-hidden mb-6"
-        style={{ border: "1px solid rgba(255,255,255,0.07)", background: "#161616" }}
+        style={{ border: `1px solid ${theme.calendarBorder}`, background: theme.calendarBg }}
       >
         {/* Month navigation */}
         <div
           className="flex items-center justify-between px-5 py-3.5"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+          style={{ borderBottom: `1px solid ${theme.calendarNavBorder}` }}
         >
           <button
             onClick={goToPrev}
@@ -159,17 +161,17 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
             aria-label="Previous month"
             className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors focus:outline-none"
             style={{
-              background: "rgba(255,255,255,0.04)",
-              opacity: canGoPrev ? 1 : 0.2,
+              background: theme.calendarNavBg,
+              opacity: canGoPrev ? 1 : 0.3,
               cursor: canGoPrev ? "pointer" : "default",
             }}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-              <path d="M9 11L5 7l4-4" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M9 11L5 7l4-4" stroke={theme.calendarNavArrow} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
-          <span className="text-sm font-semibold text-white tabular-nums">
+          <span className="text-sm font-semibold tabular-nums" style={{ color: theme.calendarMonthText }}>
             {MONTH_NAMES[viewMonth]} {viewYear}
           </span>
 
@@ -179,13 +181,13 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
             aria-label="Next month"
             className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors focus:outline-none"
             style={{
-              background: "rgba(255,255,255,0.04)",
-              opacity: canGoNext ? 1 : 0.2,
+              background: theme.calendarNavBg,
+              opacity: canGoNext ? 1 : 0.3,
               cursor: canGoNext ? "pointer" : "default",
             }}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-              <path d="M5 3l4 4-4 4" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M5 3l4 4-4 4" stroke={theme.calendarNavArrow} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>
@@ -193,13 +195,13 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
         {/* Column headers */}
         <div
           className="grid grid-cols-7"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.02)" }}
+          style={{ borderBottom: `1px solid ${theme.calendarHeaderBorder}`, background: theme.calendarHeaderBg }}
         >
           {COL_HEADERS.map((h) => (
             <div
               key={h}
               className="py-2.5 text-center text-xs font-semibold uppercase tracking-wider"
-              style={{ color: "#334155" }}
+              style={{ color: theme.calendarHeaderText }}
             >
               {h}
             </div>
@@ -210,7 +212,7 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
         <div className="grid grid-cols-7">
           {cells.map((iso, i) => {
             if (!iso) {
-              return <div key={`pad-${i}`} className="h-10" style={{ borderTop: "1px solid rgba(255,255,255,0.03)" }} />;
+              return <div key={`pad-${i}`} className="h-10" style={{ borderTop: `1px solid ${theme.calendarCellBorder}` }} />;
             }
 
             const status = statusMap[iso] ?? "loading";
@@ -226,12 +228,12 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
             const textColor = isSelected
               ? "#FFFFFF"
               : status === "past" || status === "out-of-range"
-              ? "rgba(255,255,255,0.12)"
+              ? theme.calendarPastText
               : status === "full"
-              ? "rgba(255,255,255,0.2)"
+              ? theme.calendarFullText
               : status === "loading"
               ? "transparent"
-              : "#E2E8F0";
+              : theme.calendarAvailText;
 
             return (
               <button
@@ -242,14 +244,14 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
                 aria-pressed={isSelected}
                 className="relative h-10 flex items-center justify-center text-sm font-medium focus:outline-none transition-colors duration-100"
                 style={{
-                  borderTop: "1px solid rgba(255,255,255,0.03)",
+                  borderTop: `1px solid ${theme.calendarCellBorder}`,
                   background: isSelected ? "#2563EB" : "transparent",
                   color: textColor,
                   cursor: isDisabled ? "default" : "pointer",
                 }}
                 onMouseEnter={(e) => {
                   if (!isDisabled && !isSelected) {
-                    e.currentTarget.style.background = "rgba(37,99,235,0.12)";
+                    e.currentTarget.style.background = theme.calendarHoverBg;
                   }
                 }}
                 onMouseLeave={(e) => {
@@ -276,7 +278,7 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
                 {status === "loading" && (
                   <span
                     className="absolute inset-1.5 rounded-md animate-pulse pointer-events-none"
-                    style={{ background: "rgba(255,255,255,0.04)" }}
+                    style={{ background: theme.calendarShimmerBg }}
                     aria-hidden="true"
                   />
                 )}
@@ -289,9 +291,9 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
         {/* Legend */}
         <div
           className="flex items-center gap-5 px-5 py-3"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.01)" }}
+          style={{ borderTop: `1px solid ${theme.calendarLegendBorder}`, background: theme.calendarLegendBg }}
         >
-          <span className="flex items-center gap-1.5 text-xs" style={{ color: "#475569" }}>
+          <span className="flex items-center gap-1.5 text-xs" style={{ color: theme.calendarLegendText }}>
             <span
               className="w-1.5 h-1.5 rounded-full inline-block"
               style={{ background: "#2563EB", boxShadow: "0 0 4px #2563EB" }}
@@ -299,15 +301,15 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
             />
             Available
           </span>
-          <span className="flex items-center gap-1.5 text-xs" style={{ color: "#475569" }}>
+          <span className="flex items-center gap-1.5 text-xs" style={{ color: theme.calendarLegendText }}>
             <span
               className="w-1.5 h-1.5 rounded-full inline-block"
-              style={{ background: "rgba(255,255,255,0.15)" }}
+              style={{ background: theme.calendarFullDot }}
               aria-hidden="true"
             />
             Fully booked
           </span>
-          <span className="flex items-center gap-1.5 text-xs" style={{ color: "#475569" }}>
+          <span className="flex items-center gap-1.5 text-xs" style={{ color: theme.calendarLegendText }}>
             <span
               className="w-3.5 h-3.5 rounded-full inline-block"
               style={{ border: "1.5px solid #2563EB" }}
@@ -321,7 +323,7 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
       {/* Time slots */}
       {activeDate && (
         <div className="mb-6">
-          <p className="text-sm font-semibold text-white mb-3">{formatDate(activeDate)}</p>
+          <p className="text-sm font-semibold mb-3" style={{ color: theme.textPrimary }}>{formatDate(activeDate)}</p>
 
           {slotsLoading ? (
             <div className="flex items-center justify-center py-8">
@@ -354,21 +356,21 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
                         background: isSelected
                           ? "#2563EB"
                           : isUnavailable
-                          ? "rgba(255,255,255,0.02)"
-                          : "rgba(37,99,235,0.1)",
+                          ? theme.slotUnavailBg
+                          : theme.slotAvailBg,
                         color: isSelected
                           ? "#FFFFFF"
                           : isUnavailable
-                          ? "rgba(255,255,255,0.15)"
-                          : "#60A5FA",
+                          ? theme.slotUnavailColor
+                          : theme.slotAvailColor,
                         textDecoration: isUnavailable ? "line-through" : "none",
                         cursor: isUnavailable ? "not-allowed" : "pointer",
                         border: `1.5px solid ${
                           isSelected
                             ? "#2563EB"
                             : isUnavailable
-                            ? "rgba(255,255,255,0.05)"
-                            : "rgba(37,99,235,0.25)"
+                            ? theme.slotUnavailBorder
+                            : theme.slotAvailBorder
                         }`,
                         boxShadow: isSelected ? "0 4px 12px rgba(37,99,235,0.4)" : "none",
                       }}
@@ -396,7 +398,7 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
             <circle cx="8" cy="8" r="7" stroke="#2563EB" strokeWidth="1.5" />
             <path d="M5 8l2.5 2.5L11 5.5" stroke="#2563EB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span style={{ color: "#93C5FD" }} className="font-medium">
+          <span style={{ color: "#2563EB" }} className="font-medium">
             {selectedDate} at {selectedTime}
           </span>
         </div>
@@ -405,9 +407,9 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
       <button
         onClick={onBack}
         className="flex items-center gap-2 text-sm transition-colors"
-        style={{ color: "#475569" }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "#94A3B8")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
+        style={{ color: theme.backColor }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = theme.backHover)}
+        onMouseLeave={(e) => (e.currentTarget.style.color = theme.backColor)}
       >
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
           <path d="M12 7.5H3M7 3.5l-4 4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

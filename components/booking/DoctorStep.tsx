@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { getDoctorsByLocation } from "@/lib/data";
+import { useTheme } from "@/context/ThemeContext";
 
 interface Props {
   locationId: string;
@@ -52,7 +53,7 @@ function getDoctorAvatar(name: string, idx: number) {
   );
 }
 
-function StarRating({ rating }: { rating: number }) {
+function StarRating({ rating, starEmpty }: { rating: number; starEmpty: string }) {
   const full = Math.floor(rating);
   const partial = rating % 1;
   return (
@@ -64,7 +65,7 @@ function StarRating({ rating }: { rating: number }) {
             <path
               d="M6 1l1.4 2.8L11 4.3l-2.5 2.4.6 3.3L6 8.5 2.9 10l.6-3.3L1 4.3l3.6-.5z"
               fill={filled ? "#FBBF24" : "transparent"}
-              stroke={filled ? "#FBBF24" : "rgba(255,255,255,0.15)"}
+              stroke={filled ? "#FBBF24" : starEmpty}
               strokeWidth="0.8"
             />
           </svg>
@@ -78,17 +79,18 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export default function DoctorStep({ locationId, selected, onSelect, onBack }: Props) {
+  const { theme } = useTheme();
   const doctors = getDoctorsByLocation(locationId);
 
   return (
     <div>
       <h2
-        className="font-heading font-bold text-white mb-1.5"
-        style={{ fontSize: 26, letterSpacing: "-0.02em" }}
+        className="font-heading font-bold mb-1.5"
+        style={{ fontSize: 26, letterSpacing: "-0.02em", color: theme.textPrimary }}
       >
         Choose a doctor
       </h2>
-      <p className="text-sm mb-8" style={{ color: "#64748B" }}>
+      <p className="text-sm mb-8" style={{ color: theme.textMuted }}>
         Available specialists at your selected clinic.
       </p>
 
@@ -108,13 +110,13 @@ export default function DoctorStep({ locationId, selected, onSelect, onBack }: P
               onClick={() => onSelect(doc.id)}
               className="text-left rounded-2xl p-5 flex flex-col gap-3.5 focus:outline-none"
               style={{
-                background: isSelected ? "rgba(37,99,235,0.12)" : "#161616",
+                background: isSelected ? "rgba(37,99,235,0.12)" : theme.surfaceCard,
                 border: isSelected
                   ? "1.5px solid #2563EB"
-                  : "1.5px solid rgba(255,255,255,0.07)",
+                  : `1.5px solid ${theme.borderSubtle}`,
                 boxShadow: isSelected
                   ? "0 0 0 4px rgba(37,99,235,0.1), 0 8px 24px rgba(37,99,235,0.08)"
-                  : "0 2px 8px rgba(0,0,0,0.3)",
+                  : `0 2px 8px rgba(0,0,0,0.06)`,
                 transition: "all 0.18s ease",
               }}
             >
@@ -126,20 +128,16 @@ export default function DoctorStep({ locationId, selected, onSelect, onBack }: P
                 <div className="min-w-0 flex-1">
                   <p
                     className="font-heading font-semibold text-sm leading-tight truncate"
-                    style={{ color: isSelected ? "#FFFFFF" : "#E2E8F0" }}
+                    style={{ color: isSelected ? theme.textPrimary : theme.textBody }}
                   >
                     {doc.name}
                   </p>
                   <span
                     className="inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full"
                     style={{
-                      background: isSelected
-                        ? "rgba(37,99,235,0.25)"
-                        : "rgba(255,255,255,0.06)",
-                      color: isSelected ? "#93C5FD" : "#64748B",
-                      border: isSelected
-                        ? "1px solid rgba(37,99,235,0.4)"
-                        : "1px solid rgba(255,255,255,0.08)",
+                      background: isSelected ? theme.selectedSpecialtyBg : theme.specialtyBg,
+                      color: isSelected ? theme.selectedSpecialtyColor : theme.specialtyColor,
+                      border: `1px solid ${isSelected ? theme.selectedSpecialtyBorder : theme.specialtyBorder}`,
                     }}
                   >
                     {doc.specialty}
@@ -148,19 +146,19 @@ export default function DoctorStep({ locationId, selected, onSelect, onBack }: P
               </div>
 
               {/* Bio */}
-              <p className="text-xs leading-relaxed" style={{ color: "#64748B" }}>
+              <p className="text-xs leading-relaxed" style={{ color: theme.textMuted }}>
                 {doc.bio}
               </p>
 
               {/* Rating + availability */}
               <div className="flex items-center justify-between">
-                {doc.rating && <StarRating rating={doc.rating} />}
+                {doc.rating && <StarRating rating={doc.rating} starEmpty={theme.starEmpty} />}
                 <div className="flex items-center gap-1.5">
                   <div
                     className="w-1.5 h-1.5 rounded-full"
                     style={{ background: avail.color, boxShadow: `0 0 6px ${avail.color}` }}
                   />
-                  <span className="text-xs" style={{ color: "#475569" }}>{avail.label}</span>
+                  <span className="text-xs" style={{ color: theme.textDimmed }}>{avail.label}</span>
                 </div>
               </div>
 
@@ -168,7 +166,7 @@ export default function DoctorStep({ locationId, selected, onSelect, onBack }: P
               {isSelected && (
                 <div
                   className="flex items-center gap-1.5 pt-1"
-                  style={{ borderTop: "1px solid rgba(37,99,235,0.2)" }}
+                  style={{ borderTop: `1px solid ${theme.selectedDivider}` }}
                 >
                   <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
                     <circle cx="6.5" cy="6.5" r="6" stroke="#2563EB" strokeWidth="1.2" />
@@ -193,9 +191,9 @@ export default function DoctorStep({ locationId, selected, onSelect, onBack }: P
       <button
         onClick={onBack}
         className="flex items-center gap-2 text-sm transition-colors"
-        style={{ color: "#475569" }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "#94A3B8")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
+        style={{ color: theme.backColor }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = theme.backHover)}
+        onMouseLeave={(e) => (e.currentTarget.style.color = theme.backColor)}
       >
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
           <path

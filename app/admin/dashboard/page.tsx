@@ -31,10 +31,37 @@ function isTodayIso(iso: string): boolean {
   return iso === "2026-04-01";
 }
 
+const NAV_ITEMS = [
+  {
+    id: "overview",
+    label: "Overview",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+        <rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+        <rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+        <rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+      </svg>
+    ),
+  },
+  {
+    id: "bookings",
+    label: "Bookings",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.4" />
+        <path d="M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        <path d="M2 7h12" stroke="currentColor" strokeWidth="1.4" />
+      </svg>
+    ),
+  },
+];
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeNav, setActiveNav] = useState("overview");
   const [view, setView] = useState<"list" | "calendar">("list");
   const [filterDoctor, setFilterDoctor] = useState("");
   const [filterLocation, setFilterLocation] = useState("");
@@ -54,7 +81,7 @@ export default function AdminDashboard() {
 
   useEffect(() => { fetchBookings(); }, [fetchBookings]);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     document.cookie = "admin_session=; Max-Age=0; path=/";
     router.push("/admin");
   };
@@ -69,7 +96,7 @@ export default function AdminDashboard() {
   };
 
   const handleCancel = async (id: number) => {
-    if (!confirm("Cancel this appointment? The patient will be notified by email.")) return;
+    if (!confirm("Cancel this appointment?")) return;
     await fetch(`/api/bookings/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -79,9 +106,6 @@ export default function AdminDashboard() {
   };
 
   const handleReschedule = async (id: number, date: string, time: string) => {
-    // Update via PATCH with a reschedule status reset to pending + new date/time
-    // Since our API only patches status, we delete and re-create, or extend — here we just update status
-    // For simplicity: PATCH the booking (we'll extend the API to support date/time)
     await fetch(`/api/bookings/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -91,8 +115,9 @@ export default function AdminDashboard() {
   };
 
   const todayCount = bookings.filter((b) => isTodayIso(b.date) && b.status !== "cancelled").length;
+  const activeCount = bookings.filter((b) => b.status !== "cancelled").length;
+  const pendingCount = bookings.filter((b) => b.status === "pending").length;
 
-  // Chart data
   const weekDays = getWeekDays();
   const weekChartData = weekDays.map((iso) => {
     const dow = new Date(iso).getDay();
@@ -108,7 +133,6 @@ export default function AdminDashboard() {
     color: DOCTOR_COLORS[i % DOCTOR_COLORS.length],
   }));
 
-  // Calendar view helpers
   const calendarBookings = bookings.filter(
     (b) =>
       weekDays.includes(b.date) &&
@@ -119,187 +143,288 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#F8FAFF" }}>
-        <div className="w-10 h-10 border-3 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0F0F0F" }}>
+        <div
+          className="w-9 h-9 rounded-full border-2 animate-spin"
+          style={{ borderColor: "rgba(37,99,235,0.15)", borderTopColor: "#2563EB" }}
+        />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "#F8FAFF" }}>
-      {/* Header */}
-      <header
-        className="sticky top-0 z-30 px-6 py-4 flex items-center justify-between"
+    <div className="flex min-h-screen" style={{ background: "#0F0F0F" }}>
+      {/* ── Sidebar ─────────────────────────────────────────────── */}
+      <aside
+        className="fixed top-0 left-0 bottom-0 flex flex-col z-20"
         style={{
-          background: "rgba(255,255,255,0.95)",
-          backdropFilter: "blur(12px)",
-          borderBottom: "1px solid #E2E8F0",
+          width: 220,
+          background: "#0A0A0A",
+          borderRight: "1px solid rgba(255,255,255,0.05)",
         }}
       >
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#2563EB" }}>
+        {/* Logo */}
+        <div
+          className="flex items-center gap-2.5 px-5 py-5"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+        >
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: "#2563EB" }}
+          >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M8 2v12M2 8h12" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
             </svg>
           </div>
           <div>
-            <span className="font-bold text-slate-800 text-sm leading-none">Clinic Dashboard</span>
-            <p className="text-xs text-slate-400">Admin</p>
-          </div>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
-        >
-          Log out
-        </button>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-
-        {/* Today badge */}
-        <div className="flex items-center gap-4">
-          <div
-            className="rounded-2xl px-6 py-4 flex items-center gap-4"
-            style={{ background: "#EFF6FF", border: "1.5px solid #BFDBFE" }}
-          >
-            <div>
-              <p className="text-xs font-semibold text-blue-500 uppercase tracking-widest mb-0.5">Today&apos;s bookings</p>
-              <span className="text-5xl font-black text-blue-600">{todayCount}</span>
-            </div>
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center"
-              style={{ background: "#DBEAFE" }}
-            >
-              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                <rect x="3" y="5" width="16" height="14" rx="3" stroke="#2563EB" strokeWidth="1.6" />
-                <path d="M7 2v4M15 2v4" stroke="#2563EB" strokeWidth="1.6" strokeLinecap="round" />
-                <path d="M3 10h16" stroke="#2563EB" strokeWidth="1.6" />
-              </svg>
-            </div>
+            <p className="font-heading font-bold text-white text-xs leading-none">US Health</p>
+            <p className="text-xs mt-0.5" style={{ color: "#334155", fontSize: 10 }}>Admin Dashboard</p>
           </div>
         </div>
 
-        {/* Controls: view toggle + filters */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* View toggle */}
-          <div className="flex rounded-xl overflow-hidden" style={{ border: "1px solid #E2E8F0", background: "#F8FAFF" }}>
-            {(["list", "calendar"] as const).map((v) => (
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-4 space-y-1">
+          {NAV_ITEMS.map((item) => {
+            const isActive = activeNav === item.id;
+            return (
               <button
-                key={v}
-                onClick={() => setView(v)}
-                className="px-4 py-2 text-xs font-semibold capitalize transition-all"
+                key={item.id}
+                onClick={() => setActiveNav(item.id)}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-left transition-all duration-150"
                 style={{
-                  background: view === v ? "#2563EB" : "transparent",
-                  color: view === v ? "#FFFFFF" : "#64748B",
+                  background: isActive ? "rgba(37,99,235,0.15)" : "transparent",
+                  color: isActive ? "#60A5FA" : "#475569",
+                  border: isActive ? "1px solid rgba(37,99,235,0.2)" : "1px solid transparent",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) e.currentTarget.style.color = "#94A3B8";
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) e.currentTarget.style.color = "#475569";
                 }}
               >
-                {v === "list" ? "List View" : "Calendar"}
+                {item.icon}
+                {item.label}
               </button>
+            );
+          })}
+        </nav>
+
+        {/* Logout */}
+        <div className="px-3 pb-5" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium mt-4 transition-all duration-150"
+            style={{ color: "#475569" }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "#F87171";
+              e.currentTarget.style.background = "rgba(248,113,113,0.06)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "#475569";
+              e.currentTarget.style.background = "transparent";
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              <path d="M11 11l3-3-3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M14 8H6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+            Log out
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Main content ─────────────────────────────────────────── */}
+      <main
+        className="flex-1 overflow-auto"
+        style={{ marginLeft: 220 }}
+      >
+        {/* Top bar */}
+        <div
+          className="sticky top-0 z-10 flex items-center justify-between px-8 py-4"
+          style={{
+            background: "rgba(15,15,15,0.9)",
+            backdropFilter: "blur(20px)",
+            borderBottom: "1px solid rgba(255,255,255,0.05)",
+          }}
+        >
+          <div>
+            <h1
+              className="font-heading font-bold text-white"
+              style={{ fontSize: 20, letterSpacing: "-0.02em" }}
+            >
+              {activeNav === "overview" ? "Overview" : "Bookings"}
+            </h1>
+            <p className="text-xs mt-0.5" style={{ color: "#475569" }}>
+              {new Date("2026-04-01").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-green-400" style={{ boxShadow: "0 0 6px #4ade80" }} />
+            <span className="text-xs" style={{ color: "#475569" }}>Live</span>
+          </div>
+        </div>
+
+        <div className="px-8 py-8 space-y-8">
+
+          {/* Stats row */}
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { label: "Today's Appointments", value: todayCount, color: "#2563EB" },
+              { label: "Active Bookings", value: activeCount, color: "#059669" },
+              { label: "Pending Review", value: pendingCount, color: "#D97706" },
+            ].map(({ label, value, color }) => (
+              <div
+                key={label}
+                className="rounded-2xl p-5"
+                style={{
+                  background: "#111111",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                }}
+              >
+                <p className="text-xs mb-3" style={{ color: "#475569" }}>{label}</p>
+                <span
+                  className="font-heading font-bold"
+                  style={{ fontSize: 36, color, letterSpacing: "-0.03em" }}
+                >
+                  {value}
+                </span>
+              </div>
             ))}
           </div>
 
-          {/* Doctor filter */}
-          <select
-            value={filterDoctor}
-            onChange={(e) => setFilterDoctor(e.target.value)}
-            className="px-3 py-2 rounded-xl text-xs font-medium text-slate-600 border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
-          >
-            <option value="">All doctors</option>
-            {DOCTORS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-          </select>
-
-          {/* Location filter */}
-          <select
-            value={filterLocation}
-            onChange={(e) => setFilterLocation(e.target.value)}
-            className="px-3 py-2 rounded-xl text-xs font-medium text-slate-600 border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
-          >
-            <option value="">All locations</option>
-            {LOCATIONS.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-          </select>
-
-          <span className="text-xs text-slate-400 ml-auto">
-            {bookings.filter(b => b.status !== 'cancelled').length} active bookings
-          </span>
-        </div>
-
-        {/* Main content */}
-        {view === "list" ? (
-          <BookingsList
-            bookings={bookings}
-            onConfirm={handleConfirm}
-            onCancel={handleCancel}
-            onReschedule={handleReschedule}
-            filterDoctor={filterDoctor}
-            filterLocation={filterLocation}
-          />
-        ) : (
-          /* Calendar view — week grid */
-          <div
-            className="rounded-2xl overflow-hidden"
-            style={{ border: "1px solid #E2E8F0", background: "#FFFFFF" }}
-          >
-            <div className="grid grid-cols-7">
-              {weekDays.map((iso) => {
-                const d = new Date(iso);
-                const isToday = isTodayIso(iso);
-                const dayBookings = calendarBookings.filter((b) => b.date === iso);
-                return (
-                  <div
-                    key={iso}
-                    className="border-r last:border-r-0 min-h-[160px]"
-                    style={{ borderColor: "#F1F5F9" }}
-                  >
-                    {/* Day header */}
-                    <div
-                      className="px-2 py-2 text-center border-b"
-                      style={{
-                        borderColor: "#F1F5F9",
-                        background: isToday ? "#EFF6FF" : "transparent",
-                      }}
-                    >
-                      <p className="text-xs text-slate-400">{DAY_NAMES[d.getDay()]}</p>
-                      <p
-                        className="text-base font-bold"
-                        style={{ color: isToday ? "#2563EB" : "#1E293B" }}
-                      >
-                        {d.getDate()}
-                      </p>
-                    </div>
-                    {/* Bookings */}
-                    <div className="p-1 space-y-1">
-                      {dayBookings.slice(0, 5).map((b) => (
-                        <div
-                          key={b.id}
-                          className="px-1.5 py-1 rounded text-xs truncate"
-                          style={{
-                            background: "#EFF6FF",
-                            color: "#1D4ED8",
-                            border: "1px solid #BFDBFE",
-                          }}
-                          title={`${b.time} — ${b.patientName}`}
-                        >
-                          {b.time} {b.patientName.split(" ")[0]}
-                        </div>
-                      ))}
-                      {dayBookings.length > 5 && (
-                        <p className="text-xs text-slate-400 px-1">+{dayBookings.length - 5} more</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+          {/* View toggle + filters */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div
+              className="flex rounded-xl overflow-hidden"
+              style={{ border: "1px solid rgba(255,255,255,0.07)", background: "#111111" }}
+            >
+              {(["list", "calendar"] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className="px-4 py-2 text-xs font-semibold capitalize transition-all"
+                  style={{
+                    background: view === v ? "#2563EB" : "transparent",
+                    color: view === v ? "#FFFFFF" : "#475569",
+                  }}
+                >
+                  {v === "list" ? "List View" : "Calendar"}
+                </button>
+              ))}
             </div>
+
+            <select
+              value={filterDoctor}
+              onChange={(e) => setFilterDoctor(e.target.value)}
+              className="px-3 py-2 rounded-xl text-xs font-medium focus:outline-none"
+              style={{
+                background: "#111111",
+                border: "1px solid rgba(255,255,255,0.07)",
+                color: "#94A3B8",
+              }}
+            >
+              <option value="">All doctors</option>
+              {DOCTORS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
+
+            <select
+              value={filterLocation}
+              onChange={(e) => setFilterLocation(e.target.value)}
+              className="px-3 py-2 rounded-xl text-xs font-medium focus:outline-none"
+              style={{
+                background: "#111111",
+                border: "1px solid rgba(255,255,255,0.07)",
+                color: "#94A3B8",
+              }}
+            >
+              <option value="">All locations</option>
+              {LOCATIONS.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+            </select>
+
+            <span className="text-xs ml-auto" style={{ color: "#334155" }}>
+              {activeCount} active
+            </span>
           </div>
-        )}
 
-        {/* Charts */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <WeeklyBarChart data={weekChartData} />
-          <DoctorDonutChart data={doctorChartData} />
+          {/* List or Calendar */}
+          {view === "list" ? (
+            <BookingsList
+              bookings={bookings}
+              onConfirm={handleConfirm}
+              onCancel={handleCancel}
+              onReschedule={handleReschedule}
+              filterDoctor={filterDoctor}
+              filterLocation={filterLocation}
+            />
+          ) : (
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{ border: "1px solid rgba(255,255,255,0.06)", background: "#111111" }}
+            >
+              <div className="grid grid-cols-7">
+                {weekDays.map((iso) => {
+                  const d = new Date(iso);
+                  const isToday = isTodayIso(iso);
+                  const dayBookings = calendarBookings.filter((b) => b.date === iso);
+                  return (
+                    <div
+                      key={iso}
+                      className="border-r last:border-r-0 min-h-[160px]"
+                      style={{ borderColor: "rgba(255,255,255,0.04)" }}
+                    >
+                      <div
+                        className="px-2 py-2.5 text-center"
+                        style={{
+                          borderBottom: "1px solid rgba(255,255,255,0.04)",
+                          background: isToday ? "rgba(37,99,235,0.1)" : "transparent",
+                        }}
+                      >
+                        <p className="text-xs" style={{ color: "#334155" }}>{DAY_NAMES[d.getDay()]}</p>
+                        <p
+                          className="font-bold text-base"
+                          style={{ color: isToday ? "#2563EB" : "#94A3B8" }}
+                        >
+                          {d.getDate()}
+                        </p>
+                      </div>
+                      <div className="p-1 space-y-1">
+                        {dayBookings.slice(0, 5).map((b) => (
+                          <div
+                            key={b.id}
+                            className="px-1.5 py-1 rounded text-xs truncate"
+                            style={{
+                              background: "rgba(37,99,235,0.1)",
+                              color: "#60A5FA",
+                              border: "1px solid rgba(37,99,235,0.2)",
+                            }}
+                            title={`${b.time} — ${b.patientName}`}
+                          >
+                            {b.time} {b.patientName.split(" ")[0]}
+                          </div>
+                        ))}
+                        {dayBookings.length > 5 && (
+                          <p className="text-xs px-1" style={{ color: "#334155" }}>
+                            +{dayBookings.length - 5} more
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Charts */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <WeeklyBarChart data={weekChartData} />
+            <DoctorDonutChart data={doctorChartData} />
+          </div>
+
         </div>
-
       </main>
     </div>
   );

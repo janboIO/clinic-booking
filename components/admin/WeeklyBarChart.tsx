@@ -19,9 +19,15 @@ export default function WeeklyBarChart({ data }: Props) {
   return (
     <div
       className="rounded-2xl p-5"
-      style={{ background: "#FFFFFF", border: "1px solid #E2E8F0" }}
+      style={{
+        background: "#111111",
+        border: "1px solid rgba(255,255,255,0.06)",
+      }}
     >
-      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">
+      <p
+        className="text-xs font-semibold uppercase tracking-widest mb-4"
+        style={{ color: "#334155" }}
+      >
         Bookings — this week
       </p>
       <svg
@@ -36,29 +42,41 @@ export default function WeeklyBarChart({ data }: Props) {
             x2={svgWidth}
             y1={chartHeight - f * chartHeight}
             y2={chartHeight - f * chartHeight}
-            stroke="#F1F5F9"
+            stroke="rgba(255,255,255,0.04)"
             strokeWidth="1"
           />
         ))}
 
         {data.map((d, i) => {
-          const barH = (d.count / max) * chartHeight;
+          const barH = Math.max((d.count / max) * chartHeight, d.count > 0 ? 4 : 0);
           const x = 20 + i * (barWidth + gap);
           const y = chartHeight - barH;
 
           return (
             <g key={d.day}>
-              {/* Bar */}
               <rect
                 x={x}
                 y={y}
                 width={barWidth}
                 height={barH}
                 rx="6"
-                fill={d.count > 0 ? "#2563EB" : "#E2E8F0"}
-                opacity={d.count > 0 ? 1 : 0.5}
+                fill={d.count > 0 ? "#2563EB" : "rgba(255,255,255,0.04)"}
+                opacity={d.count > 0 ? 1 : 1}
               />
-              {/* Count label */}
+              {/* Glow for filled bars */}
+              {d.count > 0 && (
+                <rect
+                  x={x}
+                  y={y}
+                  width={barWidth}
+                  height={barH}
+                  rx="6"
+                  fill="none"
+                  stroke="#2563EB"
+                  strokeWidth="0.5"
+                  opacity="0.4"
+                />
+              )}
               {d.count > 0 && (
                 <text
                   x={x + barWidth / 2}
@@ -66,20 +84,19 @@ export default function WeeklyBarChart({ data }: Props) {
                   textAnchor="middle"
                   fontSize="11"
                   fontWeight="700"
-                  fill="#2563EB"
+                  fill="#60A5FA"
                   fontFamily="system-ui, sans-serif"
                 >
                   {d.count}
                 </text>
               )}
-              {/* Day label */}
               <text
                 x={x + barWidth / 2}
                 y={chartHeight + 18}
                 textAnchor="middle"
                 fontSize="11"
                 fontWeight="600"
-                fill="#94A3B8"
+                fill="#334155"
                 fontFamily="system-ui, sans-serif"
               >
                 {d.day}

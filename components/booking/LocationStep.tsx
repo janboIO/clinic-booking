@@ -8,75 +8,151 @@ interface Props {
   onSelect: (locationId: string) => void;
 }
 
+function NYCSkyline() {
+  return (
+    <svg viewBox="0 0 72 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="72" height="48">
+      <rect x="4" y="28" width="6" height="20" rx="1" fill="#2563EB" opacity="0.5" />
+      <rect x="12" y="20" width="7" height="28" rx="1" fill="#2563EB" opacity="0.7" />
+      <rect x="21" y="10" width="10" height="38" rx="1" fill="#2563EB" opacity="0.9" />
+      <rect x="24" y="4" width="4" height="10" rx="1" fill="#2563EB" />
+      <rect x="33" y="18" width="8" height="30" rx="1" fill="#2563EB" opacity="0.8" />
+      <rect x="43" y="14" width="9" height="34" rx="1" fill="#2563EB" opacity="0.95" />
+      <rect x="46" y="6" width="3" height="12" rx="1" fill="#2563EB" />
+      <rect x="54" y="24" width="7" height="24" rx="1" fill="#2563EB" opacity="0.6" />
+      <rect x="63" y="30" width="5" height="18" rx="1" fill="#2563EB" opacity="0.4" />
+      <rect x="0" y="46" width="72" height="2" rx="1" fill="#2563EB" opacity="0.2" />
+    </svg>
+  );
+}
+
+function LASkyline() {
+  return (
+    <svg viewBox="0 0 72 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="72" height="48">
+      {/* Hills */}
+      <path d="M0 38 Q18 22 36 30 Q54 18 72 28 L72 48 L0 48Z" fill="#2563EB" opacity="0.12" />
+      <path d="M0 42 Q12 32 24 36 Q36 28 48 34 Q60 26 72 32 L72 48 L0 48Z" fill="#2563EB" opacity="0.2" />
+      {/* Palm trunk */}
+      <rect x="34" y="30" width="4" height="18" rx="2" fill="#2563EB" opacity="0.7" />
+      {/* Palm fronds */}
+      <path d="M36 30 Q20 22 14 14" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" opacity="0.8" />
+      <path d="M36 30 Q52 22 58 14" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" opacity="0.8" />
+      <path d="M36 30 Q22 28 12 30" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+      <path d="M36 30 Q50 28 60 30" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+      <path d="M36 30 Q28 20 26 10" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
+      <path d="M36 30 Q44 20 46 10" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
+      {/* Sun */}
+      <circle cx="58" cy="12" r="6" fill="#2563EB" opacity="0.25" />
+      <circle cx="58" cy="12" r="3.5" fill="#2563EB" opacity="0.5" />
+    </svg>
+  );
+}
+
+function ChicagoSkyline() {
+  return (
+    <svg viewBox="0 0 72 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="72" height="48">
+      <rect x="3" y="34" width="7" height="14" rx="1" fill="#2563EB" opacity="0.45" />
+      <rect x="12" y="26" width="8" height="22" rx="1" fill="#2563EB" opacity="0.65" />
+      <rect x="22" y="8" width="13" height="40" rx="1" fill="#2563EB" opacity="0.95" />
+      <rect x="26" y="2" width="5" height="10" rx="1" fill="#2563EB" />
+      <rect x="28" y="0" width="2" height="5" rx="1" fill="#2563EB" />
+      <rect x="37" y="18" width="10" height="30" rx="1" fill="#2563EB" opacity="0.85" />
+      <rect x="40" y="12" width="4" height="9" rx="1" fill="#2563EB" opacity="0.85" />
+      <rect x="49" y="22" width="9" height="26" rx="1" fill="#2563EB" opacity="0.7" />
+      <rect x="60" y="30" width="7" height="18" rx="1" fill="#2563EB" opacity="0.5" />
+      {/* Water reflection */}
+      <rect x="0" y="46" width="72" height="2" rx="1" fill="#2563EB" opacity="0.15" />
+      <path d="M0 46 Q36 43 72 46" stroke="#2563EB" strokeWidth="0.5" opacity="0.3" />
+    </svg>
+  );
+}
+
+const CITY_ILLUSTRATIONS = [NYCSkyline, LASkyline, ChicagoSkyline];
+
 export default function LocationStep({ selected, onSelect }: Props) {
   return (
     <div>
-      <h2 className="text-2xl font-bold text-slate-800 mb-2">Choose a clinic</h2>
-      <p className="text-slate-500 text-sm mb-8">
-        Select the Oslo clinic most convenient for you.
+      <h2
+        className="font-heading font-bold text-white mb-1.5"
+        style={{ fontSize: 26, letterSpacing: "-0.02em" }}
+      >
+        Choose your clinic
+      </h2>
+      <p className="text-sm mb-8" style={{ color: "#64748B" }}>
+        Select the location most convenient for you.
       </p>
 
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         {LOCATIONS.map((loc, i) => {
           const isSelected = selected === loc.id;
+          const Illustration = CITY_ILLUSTRATIONS[i];
+
           return (
             <motion.button
               key={loc.id}
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08 }}
+              transition={{ delay: i * 0.07 }}
+              whileHover={{ y: -2, transition: { duration: 0.15 } }}
               onClick={() => onSelect(loc.id)}
-              className="w-full text-left rounded-2xl p-5 border-2 transition-all duration-200 flex items-center gap-5 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="w-full text-left rounded-2xl p-5 flex items-center gap-5 focus:outline-none"
               style={{
-                borderColor: isSelected ? "#2563EB" : "#E2E8F0",
-                background: isSelected ? "#EFF6FF" : "#FFFFFF",
+                background: isSelected
+                  ? "rgba(37,99,235,0.12)"
+                  : "#161616",
+                border: isSelected
+                  ? "1.5px solid #2563EB"
+                  : "1.5px solid rgba(255,255,255,0.07)",
                 boxShadow: isSelected
-                  ? "0 0 0 4px rgba(37,99,235,0.08)"
-                  : "0 1px 4px rgba(0,0,0,0.04)",
+                  ? "0 0 0 4px rgba(37,99,235,0.12), 0 8px 24px rgba(37,99,235,0.08)"
+                  : "0 2px 8px rgba(0,0,0,0.3)",
+                transition: "all 0.18s ease",
               }}
             >
-              {/* Map pin icon */}
+              {/* City illustration */}
               <div
-                className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center"
-                style={{ background: isSelected ? "#DBEAFE" : "#F1F5F9" }}
+                className="flex-shrink-0 w-20 h-14 rounded-xl flex items-end justify-center overflow-hidden pb-1"
+                style={{
+                  background: isSelected
+                    ? "rgba(37,99,235,0.1)"
+                    : "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.05)",
+                }}
               >
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                  <path
-                    d="M11 2C7.686 2 5 4.686 5 8c0 5.25 6 12 6 12s6-6.75 6-12c0-3.314-2.686-6-6-6zm0 8.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"
-                    fill={isSelected ? "#2563EB" : "#94A3B8"}
-                  />
-                </svg>
+                <Illustration />
               </div>
 
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
+                <div className="flex items-center gap-2 mb-1">
                   <span
-                    className="font-semibold text-base"
-                    style={{ color: isSelected ? "#1D4ED8" : "#1E293B" }}
+                    className="font-heading font-semibold text-sm"
+                    style={{ color: isSelected ? "#FFFFFF" : "#E2E8F0" }}
                   >
                     {loc.name}
                   </span>
                   {isSelected && (
-                    <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full font-medium">
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full font-medium"
+                      style={{ background: "#2563EB", color: "#FFFFFF", fontSize: 10 }}
+                    >
                       Selected
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-slate-500">{loc.address}</p>
-                <p className="text-xs text-slate-400 mt-0.5">{loc.district}, Oslo</p>
+                <p className="text-xs truncate" style={{ color: "#64748B" }}>{loc.address}</p>
+                <p className="text-xs mt-0.5" style={{ color: "#475569" }}>{loc.district}</p>
               </div>
 
               {/* Arrow */}
               <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
+                width="18"
+                height="18"
+                viewBox="0 0 18 18"
                 fill="none"
                 className="flex-shrink-0"
               >
                 <path
-                  d="M5 10h10M11 6l4 4-4 4"
-                  stroke={isSelected ? "#2563EB" : "#CBD5E1"}
+                  d="M4 9h10M10 5l4 4-4 4"
+                  stroke={isSelected ? "#2563EB" : "rgba(255,255,255,0.2)"}
                   strokeWidth="1.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"

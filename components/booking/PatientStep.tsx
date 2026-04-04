@@ -31,14 +31,32 @@ function Field({
   required?: boolean;
   as?: "textarea";
 }) {
-  const base =
-    "w-full px-4 py-3 rounded-xl border text-slate-800 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all";
-  const style = { border: "1.5px solid #E2E8F0", background: "#FFFFFF" };
+  const sharedStyle: React.CSSProperties = {
+    background: "#111111",
+    border: "1.5px solid rgba(255,255,255,0.1)",
+    borderRadius: 12,
+    color: "#FFFFFF",
+    fontSize: 14,
+    padding: "12px 16px",
+    width: "100%",
+    outline: "none",
+    transition: "border-color 0.15s, box-shadow 0.15s",
+  };
+
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    e.currentTarget.style.borderColor = "#2563EB";
+    e.currentTarget.style.boxShadow = "0 0 0 3px rgba(37,99,235,0.15)";
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+    e.currentTarget.style.boxShadow = "none";
+  };
 
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-slate-700 mb-1.5">
-        {label} {required && <span className="text-red-400">*</span>}
+      <label htmlFor={id} className="block text-sm font-medium mb-1.5" style={{ color: "#94A3B8" }}>
+        {label} {required && <span style={{ color: "#EF4444" }}>*</span>}
       </label>
       {as === "textarea" ? (
         <textarea
@@ -48,8 +66,9 @@ function Field({
           placeholder={placeholder}
           required={required}
           rows={3}
-          className={base}
-          style={style}
+          style={{ ...sharedStyle, resize: "none" }}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
         />
       ) : (
         <input
@@ -59,8 +78,9 @@ function Field({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           required={required}
-          className={base}
-          style={style}
+          style={sharedStyle}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
         />
       )}
     </div>
@@ -81,36 +101,53 @@ export default function PatientStep({ formData, onSubmit, onBack, isSubmitting }
     onSubmit({ patientName: name, patientPhone: phone, patientEmail: email, reason });
   };
 
+  const summaryRows = [
+    { label: "Clinic", value: location?.name ?? "—" },
+    { label: "Doctor", value: doctor?.name ?? "—" },
+    { label: "Date", value: formData.date ?? "—" },
+    { label: "Time", value: formData.time ?? "—" },
+  ];
+
   return (
     <div>
-      <h2 className="text-2xl font-bold text-slate-800 mb-2">Your details</h2>
-      <p className="text-slate-500 text-sm mb-6">Review your booking and enter your contact information.</p>
+      <h2
+        className="font-heading font-bold text-white mb-1.5"
+        style={{ fontSize: 26, letterSpacing: "-0.02em" }}
+      >
+        Your details
+      </h2>
+      <p className="text-sm mb-6" style={{ color: "#64748B" }}>
+        Review your booking and enter your contact information.
+      </p>
 
       {/* Booking summary */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         className="rounded-2xl p-5 mb-8"
-        style={{ background: "#EFF6FF", border: "1.5px solid #BFDBFE" }}
+        style={{
+          background: "rgba(37,99,235,0.08)",
+          border: "1px solid rgba(37,99,235,0.2)",
+        }}
       >
-        <p className="text-xs font-semibold text-blue-500 uppercase tracking-widest mb-3">Booking summary</p>
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <p className="text-slate-500 text-xs mb-0.5">Clinic</p>
-            <p className="font-medium text-slate-800">{location?.name ?? "—"}</p>
-          </div>
-          <div>
-            <p className="text-slate-500 text-xs mb-0.5">Doctor</p>
-            <p className="font-medium text-slate-800">{doctor?.name ?? "—"}</p>
-          </div>
-          <div>
-            <p className="text-slate-500 text-xs mb-0.5">Date</p>
-            <p className="font-medium text-slate-800">{formData.date ?? "—"}</p>
-          </div>
-          <div>
-            <p className="text-slate-500 text-xs mb-0.5">Time</p>
-            <p className="font-bold text-blue-600">{formData.time ?? "—"}</p>
-          </div>
+        <p
+          className="text-xs font-semibold uppercase tracking-widest mb-4"
+          style={{ color: "#60A5FA" }}
+        >
+          Booking summary
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          {summaryRows.map(({ label, value }) => (
+            <div key={label}>
+              <p className="text-xs mb-0.5" style={{ color: "#475569" }}>{label}</p>
+              <p
+                className="font-semibold text-sm"
+                style={{ color: label === "Time" ? "#60A5FA" : "#E2E8F0" }}
+              >
+                {value}
+              </p>
+            </div>
+          ))}
         </div>
       </motion.div>
 
@@ -120,7 +157,7 @@ export default function PatientStep({ formData, onSubmit, onBack, isSubmitting }
           id="name"
           value={name}
           onChange={setName}
-          placeholder="e.g. Emma Larsen"
+          placeholder="e.g. John Smith"
           required
         />
         <Field
@@ -129,7 +166,7 @@ export default function PatientStep({ formData, onSubmit, onBack, isSubmitting }
           type="tel"
           value={phone}
           onChange={setPhone}
-          placeholder="+47 90 00 00 00"
+          placeholder="+1 (555) 000-0000"
           required
         />
         <Field
@@ -155,10 +192,13 @@ export default function PatientStep({ formData, onSubmit, onBack, isSubmitting }
           <button
             type="button"
             onClick={onBack}
-            className="flex items-center gap-2 text-sm text-slate-500 hover:text-blue-600 transition-colors"
+            className="flex items-center gap-2 text-sm transition-colors"
+            style={{ color: "#475569" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#94A3B8")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M13 8H3M7 4l-4 4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <path d="M12 7.5H3M7 3.5l-4 4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             Back
           </button>
@@ -166,16 +206,26 @@ export default function PatientStep({ formData, onSubmit, onBack, isSubmitting }
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 py-3.5 rounded-xl font-semibold text-sm text-white transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="flex-1 py-3.5 rounded-xl font-semibold text-sm text-white transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none"
             style={{
-              background: isSubmitting ? "#93C5FD" : "#2563EB",
+              background: isSubmitting ? "rgba(37,99,235,0.5)" : "#2563EB",
               cursor: isSubmitting ? "not-allowed" : "pointer",
-              boxShadow: isSubmitting ? "none" : "0 4px 14px rgba(37,99,235,0.35)",
+              boxShadow: isSubmitting ? "none" : "0 6px 20px rgba(37,99,235,0.4)",
+              letterSpacing: "-0.01em",
+            }}
+            onMouseEnter={(e) => {
+              if (!isSubmitting) e.currentTarget.style.background = "#1D4ED8";
+            }}
+            onMouseLeave={(e) => {
+              if (!isSubmitting) e.currentTarget.style.background = "#2563EB";
             }}
           >
             {isSubmitting ? (
               <>
-                <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                <div
+                  className="w-4 h-4 border-2 rounded-full animate-spin"
+                  style={{ borderColor: "rgba(255,255,255,0.3)", borderTopColor: "#FFFFFF" }}
+                />
                 Confirming…
               </>
             ) : (

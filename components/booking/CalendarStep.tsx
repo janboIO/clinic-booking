@@ -23,12 +23,10 @@ function toIso(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-// Convert JS day (0=Sun) to Mon-first column index (0=Mon … 6=Sun)
 function colIndex(jsDay: number): number {
   return (jsDay + 6) % 7;
 }
 
-// Build flat grid cells for a month: null = padding, string = ISO date
 function buildCells(year: number, month: number): (string | null)[] {
   const firstDow = new Date(year, month, 1).getDay();
   const totalDays = new Date(year, month + 1, 0).getDate();
@@ -48,7 +46,6 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
   maxDate.setMonth(maxDate.getMonth() + 3);
   const maxIso = toIso(maxDate);
 
-  // If returning to this step with a date already chosen, open that month
   const initDate = selectedDate ? new Date(selectedDate + "T00:00:00") : now;
   const [viewYear, setViewYear] = useState(initDate.getFullYear());
   const [viewMonth, setViewMonth] = useState(initDate.getMonth());
@@ -58,7 +55,6 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
 
-  // Pre-fetch availability for every bookable date in the visible month
   useEffect(() => {
     const cells = buildCells(viewYear, viewMonth);
     const initial: Record<string, DateStatus> = {};
@@ -101,7 +97,6 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
     [doctorId]
   );
 
-  // Re-fetch slots when the doctor changes and a date is already active
   useEffect(() => {
     if (activeDate) fetchSlots(activeDate);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -133,31 +128,48 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
 
   const formatDate = (iso: string) => {
     const d = new Date(iso + "T00:00:00");
-    return `${FULL_DAY_NAMES[d.getDay()]}, ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
+    return `${FULL_DAY_NAMES[d.getDay()]}, ${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`;
   };
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-slate-800 mb-2">Pick a date &amp; time</h2>
-      <p className="text-slate-500 text-sm mb-6">Select an available date, then choose a time slot.</p>
+      <h2
+        className="font-heading font-bold text-white mb-1.5"
+        style={{ fontSize: 26, letterSpacing: "-0.02em" }}
+      >
+        Pick a date &amp; time
+      </h2>
+      <p className="text-sm mb-6" style={{ color: "#64748B" }}>
+        Select an available date, then choose a time slot.
+      </p>
 
-      {/* ── Monthly calendar ─────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-slate-200 overflow-hidden mb-6">
-
+      {/* Calendar */}
+      <div
+        className="rounded-2xl overflow-hidden mb-6"
+        style={{ border: "1px solid rgba(255,255,255,0.07)", background: "#161616" }}
+      >
         {/* Month navigation */}
-        <div className="flex items-center justify-between px-5 py-3 bg-white border-b border-slate-100">
+        <div
+          className="flex items-center justify-between px-5 py-3.5"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+        >
           <button
             onClick={goToPrev}
             disabled={!canGoPrev}
             aria-label="Previous month"
-            className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors hover:bg-slate-100 disabled:opacity-25 disabled:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+            className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors focus:outline-none"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              opacity: canGoPrev ? 1 : 0.2,
+              cursor: canGoPrev ? "pointer" : "default",
+            }}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-              <path d="M9 11L5 7l4-4" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M9 11L5 7l4-4" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
-          <span className="text-sm font-semibold text-slate-800 tabular-nums">
+          <span className="text-sm font-semibold text-white tabular-nums">
             {MONTH_NAMES[viewMonth]} {viewYear}
           </span>
 
@@ -165,20 +177,29 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
             onClick={goToNext}
             disabled={!canGoNext}
             aria-label="Next month"
-            className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors hover:bg-slate-100 disabled:opacity-25 disabled:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+            className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors focus:outline-none"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              opacity: canGoNext ? 1 : 0.2,
+              cursor: canGoNext ? "pointer" : "default",
+            }}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-              <path d="M5 3l4 4-4 4" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M5 3l4 4-4 4" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>
 
         {/* Column headers */}
-        <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50">
+        <div
+          className="grid grid-cols-7"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.02)" }}
+        >
           {COL_HEADERS.map((h) => (
             <div
               key={h}
-              className="py-2.5 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider"
+              className="py-2.5 text-center text-xs font-semibold uppercase tracking-wider"
+              style={{ color: "#334155" }}
             >
               {h}
             </div>
@@ -186,10 +207,10 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
         </div>
 
         {/* Date cells */}
-        <div className="grid grid-cols-7 bg-white">
+        <div className="grid grid-cols-7">
           {cells.map((iso, i) => {
             if (!iso) {
-              return <div key={`pad-${i}`} className="h-10 border-t border-slate-50" />;
+              return <div key={`pad-${i}`} className="h-10" style={{ borderTop: "1px solid rgba(255,255,255,0.03)" }} />;
             }
 
             const status = statusMap[iso] ?? "loading";
@@ -204,11 +225,13 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
 
             const textColor = isSelected
               ? "#FFFFFF"
-              : status === "past" || status === "out-of-range" || status === "full"
-              ? "#CBD5E1"
+              : status === "past" || status === "out-of-range"
+              ? "rgba(255,255,255,0.12)"
+              : status === "full"
+              ? "rgba(255,255,255,0.2)"
               : status === "loading"
-              ? "#E2E8F0"
-              : "#1E293B";
+              ? "transparent"
+              : "#E2E8F0";
 
             return (
               <button
@@ -217,31 +240,43 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
                 disabled={isDisabled}
                 aria-label={`${iso}${isDisabled ? ", unavailable" : ""}`}
                 aria-pressed={isSelected}
-                className="relative h-10 flex items-center justify-center text-sm font-medium border-t border-slate-50 transition-colors duration-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400"
+                className="relative h-10 flex items-center justify-center text-sm font-medium focus:outline-none transition-colors duration-100"
                 style={{
+                  borderTop: "1px solid rgba(255,255,255,0.03)",
                   background: isSelected ? "#2563EB" : "transparent",
                   color: textColor,
                   cursor: isDisabled ? "default" : "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isDisabled && !isSelected) {
+                    e.currentTarget.style.background = "rgba(37,99,235,0.12)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSelected) e.currentTarget.style.background = "transparent";
                 }}
               >
                 {/* Today ring */}
                 {isToday && !isSelected && (
                   <span
-                    className="absolute inset-1 rounded-full border border-blue-300 pointer-events-none"
+                    className="absolute inset-1 rounded-full pointer-events-none"
+                    style={{ border: "1.5px solid #2563EB" }}
                     aria-hidden="true"
                   />
                 )}
-                {/* Blue availability dot */}
+                {/* Available dot */}
                 {status === "available" && !isSelected && (
                   <span
-                    className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-blue-500 pointer-events-none"
+                    className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full pointer-events-none"
+                    style={{ background: "#2563EB", boxShadow: "0 0 4px #2563EB" }}
                     aria-hidden="true"
                   />
                 )}
                 {/* Loading shimmer */}
                 {status === "loading" && (
                   <span
-                    className="absolute inset-1.5 rounded-md bg-slate-100 animate-pulse pointer-events-none"
+                    className="absolute inset-1.5 rounded-md animate-pulse pointer-events-none"
+                    style={{ background: "rgba(255,255,255,0.04)" }}
                     aria-hidden="true"
                   />
                 )}
@@ -252,18 +287,30 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-5 px-5 py-3 bg-slate-50 border-t border-slate-100">
-          <span className="flex items-center gap-1.5 text-xs text-slate-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block" aria-hidden="true" />
+        <div
+          className="flex items-center gap-5 px-5 py-3"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.01)" }}
+        >
+          <span className="flex items-center gap-1.5 text-xs" style={{ color: "#475569" }}>
+            <span
+              className="w-1.5 h-1.5 rounded-full inline-block"
+              style={{ background: "#2563EB", boxShadow: "0 0 4px #2563EB" }}
+              aria-hidden="true"
+            />
             Available
           </span>
-          <span className="flex items-center gap-1.5 text-xs text-slate-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-200 inline-block" aria-hidden="true" />
+          <span className="flex items-center gap-1.5 text-xs" style={{ color: "#475569" }}>
+            <span
+              className="w-1.5 h-1.5 rounded-full inline-block"
+              style={{ background: "rgba(255,255,255,0.15)" }}
+              aria-hidden="true"
+            />
             Fully booked
           </span>
-          <span className="flex items-center gap-1.5 text-xs text-slate-400">
+          <span className="flex items-center gap-1.5 text-xs" style={{ color: "#475569" }}>
             <span
-              className="w-3.5 h-3.5 rounded-full border border-blue-300 inline-block"
+              className="w-3.5 h-3.5 rounded-full inline-block"
+              style={{ border: "1.5px solid #2563EB" }}
               aria-hidden="true"
             />
             Today
@@ -271,14 +318,17 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
         </div>
       </div>
 
-      {/* ── Time slots (shown once a date is selected) ───────────────── */}
+      {/* Time slots */}
       {activeDate && (
         <div className="mb-6">
-          <p className="text-sm font-semibold text-slate-700 mb-3">{formatDate(activeDate)}</p>
+          <p className="text-sm font-semibold text-white mb-3">{formatDate(activeDate)}</p>
 
           {slotsLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="w-7 h-7 border-2 border-blue-100 border-t-blue-500 rounded-full animate-spin" />
+              <div
+                className="w-6 h-6 rounded-full border-2 animate-spin"
+                style={{ borderColor: "rgba(37,99,235,0.2)", borderTopColor: "#2563EB" }}
+              />
             </div>
           ) : (
             <AnimatePresence mode="wait">
@@ -294,21 +344,37 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
                   const isSelected = slot.time === selectedTime && activeDate === selectedDate;
                   const isUnavailable = !slot.available;
                   return (
-                    <button
+                    <motion.button
                       key={slot.time}
                       disabled={isUnavailable}
                       onClick={() => onSelect(activeDate, slot.time)}
-                      className="py-2 rounded-xl text-sm font-medium transition-all duration-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                      whileTap={!isUnavailable ? { scale: 0.95 } : {}}
+                      className="py-2 rounded-xl text-sm font-medium focus:outline-none transition-all duration-100"
                       style={{
-                        background: isSelected ? "#1D4ED8" : isUnavailable ? "#F8FAFC" : "#EFF6FF",
-                        color: isSelected ? "#FFFFFF" : isUnavailable ? "#CBD5E1" : "#2563EB",
+                        background: isSelected
+                          ? "#2563EB"
+                          : isUnavailable
+                          ? "rgba(255,255,255,0.02)"
+                          : "rgba(37,99,235,0.1)",
+                        color: isSelected
+                          ? "#FFFFFF"
+                          : isUnavailable
+                          ? "rgba(255,255,255,0.15)"
+                          : "#60A5FA",
                         textDecoration: isUnavailable ? "line-through" : "none",
                         cursor: isUnavailable ? "not-allowed" : "pointer",
-                        border: `1.5px solid ${isSelected ? "#1D4ED8" : isUnavailable ? "#E2E8F0" : "#BFDBFE"}`,
+                        border: `1.5px solid ${
+                          isSelected
+                            ? "#2563EB"
+                            : isUnavailable
+                            ? "rgba(255,255,255,0.05)"
+                            : "rgba(37,99,235,0.25)"
+                        }`,
+                        boxShadow: isSelected ? "0 4px 12px rgba(37,99,235,0.4)" : "none",
                       }}
                     >
                       {slot.time}
-                    </button>
+                    </motion.button>
                   );
                 })}
               </motion.div>
@@ -317,28 +383,34 @@ export default function CalendarStep({ doctorId, selectedDate, selectedTime, onS
         </div>
       )}
 
-      {/* ── Confirmation badge ───────────────────────────────────────── */}
+      {/* Selected summary */}
       {selectedDate && selectedTime && (
         <div
           className="mb-6 px-4 py-3 rounded-xl flex items-center gap-3 text-sm"
-          style={{ background: "#EFF6FF", border: "1px solid #BFDBFE" }}
+          style={{
+            background: "rgba(37,99,235,0.1)",
+            border: "1px solid rgba(37,99,235,0.25)",
+          }}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <circle cx="8" cy="8" r="7" stroke="#2563EB" strokeWidth="1.5" />
             <path d="M5 8l2.5 2.5L11 5.5" stroke="#2563EB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span className="text-blue-700 font-medium">
-            Selected: {selectedDate} at {selectedTime}
+          <span style={{ color: "#93C5FD" }} className="font-medium">
+            {selectedDate} at {selectedTime}
           </span>
         </div>
       )}
 
       <button
         onClick={onBack}
-        className="flex items-center gap-2 text-sm text-slate-500 hover:text-blue-600 transition-colors"
+        className="flex items-center gap-2 text-sm transition-colors"
+        style={{ color: "#475569" }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "#94A3B8")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path d="M13 8H3M7 4l-4 4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+          <path d="M12 7.5H3M7 3.5l-4 4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         Back to doctors
       </button>

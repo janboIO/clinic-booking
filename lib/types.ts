@@ -10,6 +10,7 @@ export interface Doctor {
   name: string;
   specialty: string;
   bio: string;
+  rating?: number;
   locationIds: string[];
 }
 

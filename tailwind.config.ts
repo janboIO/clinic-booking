@@ -22,6 +22,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        heading: ["var(--font-heading)", "system-ui", "sans-serif"],
       },
       animation: {
         "draw-check": "drawCheck 0.5s ease-out forwards",

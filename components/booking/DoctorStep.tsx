@@ -11,10 +11,19 @@ interface Props {
 }
 
 const AVATAR_COLORS = [
-  "#4F46E5", "#7C3AED", "#0891B2", "#059669", "#D97706", "#DC2626",
+  "#4F46E5", "#0891B2", "#059669", "#D97706", "#7C3AED", "#DC2626",
 ];
 
-function getDoctorAvatar(name: string) {
+const AVAILABILITY = [
+  { label: "Available today", color: "#4ade80" },
+  { label: "Available today", color: "#4ade80" },
+  { label: "Next avail. Mon", color: "#60a5fa" },
+  { label: "Available today", color: "#4ade80" },
+  { label: "Next avail. Tue", color: "#60a5fa" },
+  { label: "Available today", color: "#4ade80" },
+];
+
+function getDoctorAvatar(name: string, idx: number) {
   const initials = name
     .replace("Dr. ", "")
     .split(" ")
@@ -22,20 +31,19 @@ function getDoctorAvatar(name: string) {
     .join("")
     .slice(0, 2)
     .toUpperCase();
-  const colorIndex =
-    name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % AVATAR_COLORS.length;
-  const color = AVATAR_COLORS[colorIndex];
+  const color = AVATAR_COLORS[idx % AVATAR_COLORS.length];
 
   return (
-    <svg width="56" height="56" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="28" cy="28" r="28" fill={color} />
+    <svg width="52" height="52" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="26" cy="26" r="26" fill={color} opacity="0.15" />
+      <circle cx="26" cy="26" r="26" fill="none" stroke={color} strokeWidth="1.5" opacity="0.4" />
       <text
-        x="28"
-        y="34"
+        x="26"
+        y="31"
         fontFamily="system-ui, sans-serif"
-        fontSize="18"
+        fontSize="16"
         fontWeight="700"
-        fill="white"
+        fill={color}
         textAnchor="middle"
       >
         {initials}
@@ -44,53 +52,94 @@ function getDoctorAvatar(name: string) {
   );
 }
 
+function StarRating({ rating }: { rating: number }) {
+  const full = Math.floor(rating);
+  const partial = rating % 1;
+  return (
+    <div className="flex items-center gap-0.5">
+      {Array.from({ length: 5 }, (_, i) => {
+        const filled = i < full || (i === full && partial >= 0.5);
+        return (
+          <svg key={i} width="11" height="11" viewBox="0 0 12 12" fill="none">
+            <path
+              d="M6 1l1.4 2.8L11 4.3l-2.5 2.4.6 3.3L6 8.5 2.9 10l.6-3.3L1 4.3l3.6-.5z"
+              fill={filled ? "#FBBF24" : "transparent"}
+              stroke={filled ? "#FBBF24" : "rgba(255,255,255,0.15)"}
+              strokeWidth="0.8"
+            />
+          </svg>
+        );
+      })}
+      <span className="ml-1 text-xs font-semibold" style={{ color: "#FBBF24" }}>
+        {rating.toFixed(1)}
+      </span>
+    </div>
+  );
+}
+
 export default function DoctorStep({ locationId, selected, onSelect, onBack }: Props) {
   const doctors = getDoctorsByLocation(locationId);
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-slate-800 mb-2">Choose a doctor</h2>
-      <p className="text-slate-500 text-sm mb-8">
+      <h2
+        className="font-heading font-bold text-white mb-1.5"
+        style={{ fontSize: 26, letterSpacing: "-0.02em" }}
+      >
+        Choose a doctor
+      </h2>
+      <p className="text-sm mb-8" style={{ color: "#64748B" }}>
         Available specialists at your selected clinic.
       </p>
 
-      <div className="grid sm:grid-cols-2 gap-4 mb-8">
+      <div className="grid sm:grid-cols-2 gap-3 mb-8">
         {doctors.map((doc, i) => {
           const isSelected = selected === doc.id;
+          const avail = AVAILABILITY[i % AVAILABILITY.length];
+
           return (
             <motion.button
               key={doc.id}
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08 }}
+              transition={{ delay: i * 0.07 }}
+              whileHover={{ y: -2, transition: { duration: 0.15 } }}
+              whileTap={{ scale: 0.99 }}
               onClick={() => onSelect(doc.id)}
-              className="text-left rounded-2xl p-5 border-2 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 flex flex-col gap-4"
+              className="text-left rounded-2xl p-5 flex flex-col gap-3.5 focus:outline-none"
               style={{
-                borderColor: isSelected ? "#2563EB" : "#E2E8F0",
-                background: isSelected ? "#EFF6FF" : "#FFFFFF",
+                background: isSelected ? "rgba(37,99,235,0.12)" : "#161616",
+                border: isSelected
+                  ? "1.5px solid #2563EB"
+                  : "1.5px solid rgba(255,255,255,0.07)",
                 boxShadow: isSelected
-                  ? "0 0 0 4px rgba(37,99,235,0.08)"
-                  : "0 1px 4px rgba(0,0,0,0.04)",
+                  ? "0 0 0 4px rgba(37,99,235,0.1), 0 8px 24px rgba(37,99,235,0.08)"
+                  : "0 2px 8px rgba(0,0,0,0.3)",
+                transition: "all 0.18s ease",
               }}
             >
+              {/* Avatar + name */}
               <div className="flex items-center gap-3">
-                {/* Avatar */}
-                <div className="flex-shrink-0 rounded-full overflow-hidden">
-                  {getDoctorAvatar(doc.name)}
+                <div className="flex-shrink-0">
+                  {getDoctorAvatar(doc.name, i)}
                 </div>
-
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p
-                    className="font-semibold text-sm leading-tight"
-                    style={{ color: isSelected ? "#1D4ED8" : "#1E293B" }}
+                    className="font-heading font-semibold text-sm leading-tight truncate"
+                    style={{ color: isSelected ? "#FFFFFF" : "#E2E8F0" }}
                   >
                     {doc.name}
                   </p>
                   <span
                     className="inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full"
                     style={{
-                      background: isSelected ? "#DBEAFE" : "#F1F5F9",
-                      color: isSelected ? "#1D4ED8" : "#64748B",
+                      background: isSelected
+                        ? "rgba(37,99,235,0.25)"
+                        : "rgba(255,255,255,0.06)",
+                      color: isSelected ? "#93C5FD" : "#64748B",
+                      border: isSelected
+                        ? "1px solid rgba(37,99,235,0.4)"
+                        : "1px solid rgba(255,255,255,0.08)",
                     }}
                   >
                     {doc.specialty}
@@ -98,15 +147,42 @@ export default function DoctorStep({ locationId, selected, onSelect, onBack }: P
                 </div>
               </div>
 
-              <p className="text-xs text-slate-500 leading-relaxed">{doc.bio}</p>
+              {/* Bio */}
+              <p className="text-xs leading-relaxed" style={{ color: "#64748B" }}>
+                {doc.bio}
+              </p>
 
+              {/* Rating + availability */}
+              <div className="flex items-center justify-between">
+                {doc.rating && <StarRating rating={doc.rating} />}
+                <div className="flex items-center gap-1.5">
+                  <div
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{ background: avail.color, boxShadow: `0 0 6px ${avail.color}` }}
+                  />
+                  <span className="text-xs" style={{ color: "#475569" }}>{avail.label}</span>
+                </div>
+              </div>
+
+              {/* Selected indicator */}
               {isSelected && (
-                <div className="flex items-center gap-1.5 text-blue-600">
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.4" />
-                    <path d="M4 7l2.5 2.5L10 4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                <div
+                  className="flex items-center gap-1.5 pt-1"
+                  style={{ borderTop: "1px solid rgba(37,99,235,0.2)" }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                    <circle cx="6.5" cy="6.5" r="6" stroke="#2563EB" strokeWidth="1.2" />
+                    <path
+                      d="M3.5 6.5l2 2 4-4"
+                      stroke="#2563EB"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
-                  <span className="text-xs font-semibold">Selected</span>
+                  <span className="text-xs font-semibold" style={{ color: "#2563EB" }}>
+                    Selected
+                  </span>
                 </div>
               )}
             </motion.button>
@@ -116,10 +192,19 @@ export default function DoctorStep({ locationId, selected, onSelect, onBack }: P
 
       <button
         onClick={onBack}
-        className="flex items-center gap-2 text-sm text-slate-500 hover:text-blue-600 transition-colors"
+        className="flex items-center gap-2 text-sm transition-colors"
+        style={{ color: "#475569" }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "#94A3B8")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M13 8H3M7 4l-4 4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+          <path
+            d="M12 7.5H3M7 3.5l-4 4 4 4"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
         Back to clinics
       </button>

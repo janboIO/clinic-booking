@@ -127,9 +127,33 @@ function BookingContent() {
           <p className="text-xs mt-0.5" style={{ color: theme.textDimmed }}>Online Booking</p>
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-green-400" style={{ boxShadow: "0 0 6px #4ade80" }} />
-          <span className="text-xs" style={{ color: theme.textMuted }}>Available now</span>
+        <div className="ml-auto flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-green-400" style={{ boxShadow: "0 0 6px #4ade80" }} />
+            <span className="text-xs" style={{ color: theme.textMuted }}>Available now</span>
+          </div>
+
+          {/* Theme toggle */}
+          <button
+            onClick={toggle}
+            aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors focus:outline-none flex-shrink-0"
+            style={{
+              background: theme.toggleBg,
+              border: `1px solid ${theme.toggleBorder}`,
+              color: theme.toggleIconColor,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "#2563EB";
+              e.currentTarget.style.borderColor = "rgba(37,99,235,0.4)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = theme.toggleIconColor;
+              e.currentTarget.style.borderColor = theme.toggleBorder;
+            }}
+          >
+            {mode === "dark" ? <SunIcon /> : <MoonIcon />}
+          </button>
         </div>
       </header>
 
@@ -145,32 +169,10 @@ function BookingContent() {
         >
           {/* Step indicator bar */}
           <div
-            className="px-8 pt-8 pb-6 relative"
+            className="px-8 pt-8 pb-6"
             style={{ borderBottom: `1px solid ${theme.cardHeaderBorder}` }}
           >
             <StepIndicator currentStep={step} />
-
-            {/* Theme toggle */}
-            <button
-              onClick={toggle}
-              aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              className="absolute top-6 right-6 w-8 h-8 rounded-lg flex items-center justify-center transition-colors focus:outline-none"
-              style={{
-                background: theme.toggleBg,
-                border: `1px solid ${theme.toggleBorder}`,
-                color: theme.toggleIconColor,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "#2563EB";
-                e.currentTarget.style.borderColor = "rgba(37,99,235,0.4)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = theme.toggleIconColor;
-                e.currentTarget.style.borderColor = theme.toggleBorder;
-              }}
-            >
-              {mode === "dark" ? <SunIcon /> : <MoonIcon />}
-            </button>
           </div>
 
           {/* Step content */}
